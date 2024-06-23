@@ -24,6 +24,7 @@ export default {
                 {id: "6", name: '端口管理', pathname: 'portManagement'},
                 {id: "7", name: '进程管理', pathname: 'processManagement'},
                 {id: "8", name: '软件管理', pathname: 'softwareManagement'},
+                {id: "9", name: '在线终端', pathname: 'terminalSys'},
                 // {id: "9", name: '可执行文件管理', pathname: 'executableFileManagement'},
             ],
         }

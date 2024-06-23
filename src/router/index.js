@@ -10,6 +10,7 @@ import ProcessManagement from "@/pages/ProcessManagement.vue";
 import SoftwareManagement from "@/pages/SoftwareManagement.vue";
 import TerminalSystem from "@/pages/TerminalSystem.vue";
 import TimingTask from "@/pages/TimingTask.vue";
+import TerminalSys from "@/pages/TerminalSys.vue";
 
 const router = new VueRouter({      // VueRouter configuration object
     routes: [
@@ -67,6 +68,11 @@ const router = new VueRouter({      // VueRouter configuration object
                     path: "timingTask",
                     name: "timingTask",
                     component: TimingTask,
+                },
+                {
+                    path: "terminalSys",
+                    name: "terminalSys",
+                    component: TerminalSys,
                 },
 
             ]
