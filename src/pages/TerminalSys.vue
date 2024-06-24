@@ -14,6 +14,7 @@ export default {
         return {
             terminal: null,
             fitAddon: null,
+            receptionCount: 0,
         };
     },
     mounted() {
@@ -39,9 +40,9 @@ export default {
                     tabStopWidth: 8, //制表宽度
                     screenKeys: true,
                     theme: {
-                        foreground: 'yellow', //字体
-                        background: '#060101', //背景色
-                        cursor: 'help', //设置光标
+                        // foreground: 'yellow', //字体
+                        // background: '#060101', //背景色
+                        // cursor: 'help', //设置光标
                     },
                 }
             );
@@ -52,9 +53,21 @@ export default {
             this.fitAddon.fit();
             this.terminal.writeln('Welcome to xterm.js in Vue!');
             this.terminal.focus();
-            // 绑定事件处理
-            
+            // 发送初始命令
+            if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+                this.$socket.send(JSON.stringify({
+                    type: 'cmdStdin', // 事件
+                    data: 'cd ~',
+                }))
+                this.$socket.send(JSON.stringify({
+                    type: 'cmdStdin', // 事件
+                    data: '\n',
+                }))
 
+                console.log('发送消息cmdStdin成功！')
+            } else {
+                console.log('WebSocket not connected! cmdStdin failed!')
+            }
         },
         sendData() {
             // 绑定数据输入事件
@@ -87,10 +100,12 @@ export default {
             const data = JSON.parse(event.data)
             if (data.type === 'cmdStdout') {
                 console.log('Terminal websocket message', data.type, data.data)
-                this.terminal.write(data.data)
-                // this.pushMsg(data.data)
+                if (this.receptionCount === 0) {
+                    this.receptionCount++
 
-                // this.flash.finish()
+                } else if (this.receptionCount === 1) {
+                    this.terminal.write(data.data)
+                }
             } else if (data.type === "cmdError") {
                 console.log('HostStatus websocket message', data.type, data.data)
             }
@@ -98,6 +113,10 @@ export default {
         onerror(err) {
             console.log('WebSocket error' + err)
         },
+    },
+    //失活
+    deactivated() {
+        this.receptionCount = 0
     }
 };
 </script>
@@ -112,6 +131,7 @@ export default {
     width: 100%;
     height: 100%;
 }
+
 .terminalSys .terminal .xterm-viewport {
     overflow-y: auto !important;
 }

@@ -1,6 +1,9 @@
 <template>
     <div class="mainBody">
-        <router-view></router-view>
+        <keep-alive include="TerminalSys">
+            <router-view></router-view>
+        </keep-alive>
+        
     </div>
 </template>
 
