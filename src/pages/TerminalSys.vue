@@ -18,12 +18,15 @@ export default {
     },
     mounted() {
         this.initTerminal();
+        this.sendData();
     },
     methods: {
         initTerminal() {
+            //如果存在终端实例，先销毁
             if (this.terminal) {
                 this.terminal.dispose()
             }
+            //创建终端实例
             this.terminal = new Terminal(
                 {
                     rendererType: 'canvas', //渲染类型
@@ -42,35 +45,64 @@ export default {
                     },
                 }
             );
+            //终端挂载到dom
             this.terminal.open(this.$refs.terminal);
             this.fitAddon = new FitAddon();
             this.terminal.loadAddon(this.fitAddon);
             this.fitAddon.fit();
             this.terminal.writeln('Welcome to xterm.js in Vue!');
             this.terminal.focus();
-            console.log(this.terminal);
             // 绑定事件处理
-            // 绑定数据输入事件
-            this.terminal.onData((data) => {
-                const printable = data.match(/[\x20-\x7E]/); // 匹配可打印字符的正则表达式
-                if (data === '\r' || data === '\x0D') {
-                    // 处理回车键，添加换行
-                    this.terminal.writeln('');
-                } else if (data === '\x08' || data === '\x7F') {
-                    // 处理退格键，删除最后一个字符
-                    this.terminal.write('\b \b');
-                } else if (printable) {
-                    // 处理可打印字符
-                    this.terminal.write(data);
-                }
-            });
+            
 
         },
+        sendData() {
+            // 绑定数据输入事件
+            this.terminal.onData((data) => {
+                // const printable = data.match(/[\x20-\x7E]/); // 匹配可打印字符的正则表达式
+                // if (data === '\r' || data === '\x0D') {
+                //     // 处理回车键，添加换行
+                //     this.terminal.writeln('');
+                // } else if (data === '\x08' || data === '\x7F') {
+                //     // 处理退格键，删除最后一个字符
+                //     this.terminal.write('\b \b');
+                // } else if (printable) {
+                //     // 处理可打印字符
+                //     this.terminal.write(data);
+                // }
+                if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+                    this.$socket.send(JSON.stringify({
+                        type: 'cmdStdin', // 事件
+                        data: data,
+                    }))
+                    console.log('发送消息cmdStdin成功！')
+                } else {
+                    console.log('WebSocket not connected! cmdStdin failed!')
+                }
+            });
+        }
     },
+    sockets: {
+        onmessage(event) {
+            const data = JSON.parse(event.data)
+            if (data.type === 'cmdStdout') {
+                console.log('Terminal websocket message', data.type, data.data)
+                this.terminal.write(data.data)
+                // this.pushMsg(data.data)
+
+                // this.flash.finish()
+            } else if (data.type === "cmdError") {
+                console.log('HostStatus websocket message', data.type, data.data)
+            }
+        },
+        onerror(err) {
+            console.log('WebSocket error' + err)
+        },
+    }
 };
 </script>
 
-<style scoped>
+<style>
 .terminal {
     width: 100%;
     height: 100%;
@@ -79,5 +111,8 @@ export default {
 .terminalSys {
     width: 100%;
     height: 100%;
+}
+.terminalSys .terminal .xterm-viewport {
+    overflow-y: auto !important;
 }
 </style>
