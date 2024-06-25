@@ -31,13 +31,13 @@ export default {
             this.terminal = new Terminal(
                 {
                     rendererType: 'canvas', //渲染类型
-                    rows: 35, //行数 18是字体高度,根据需要自己修改
+                    //rows: 35, //行数 18是字体高度,根据需要自己修改
                     convertEol: true, //启用时，光标将设置为下一行的开头
                     // scrollback: 800, //终端中的回滚量
                     disableStdin: false, //是否应禁用输入
                     // cursorStyle: 'underline', //光标样式
-                    cursorBlink: true, //光标闪烁
-                    tabStopWidth: 8, //制表宽度
+                    // cursorBlink: true, //光标闪烁
+                    // tabStopWidth: 8, //制表宽度
                     screenKeys: true,
                     theme: {
                         // foreground: 'yellow', //字体
@@ -65,6 +65,13 @@ export default {
                 }))
 
                 console.log('发送消息cmdStdin成功！')
+                this.$socket.send(JSON.stringify({
+                    type: 'ptyInfo', // 事件
+                    data: {
+                        cols: this.terminal.cols,
+                        rows: this.terminal.rows,
+                    }
+                }))
             } else {
                 console.log('WebSocket not connected! cmdStdin failed!')
             }
@@ -117,7 +124,17 @@ export default {
     //失活
     deactivated() {
         this.receptionCount = 0
-    }
+    },
+    // activated() {
+    //     this.$socket.send(JSON.stringify({
+    //         type: 'ptyInfo', // 事件
+    //         data: {
+    //             cols: this.terminal.cols,
+    //             rows: this.terminal.rows,
+    //         }
+    //     }))
+    //     console.log('激活！发送消息ptyInfo成功！')
+    // },
 };
 </script>
 
