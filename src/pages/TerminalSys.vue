@@ -31,7 +31,7 @@ export default {
             this.terminal = new Terminal(
                 {
                     rendererType: 'canvas', //渲染类型
-                    //rows: 35, //行数 18是字体高度,根据需要自己修改
+                    rows: 200, //行数 18是字体高度,根据需要自己修改
                     convertEol: true, //启用时，光标将设置为下一行的开头
                     // scrollback: 800, //终端中的回滚量
                     disableStdin: false, //是否应禁用输入
@@ -54,27 +54,28 @@ export default {
             this.terminal.writeln('Welcome to xterm.js in Vue!');
             this.terminal.focus();
             // 发送初始命令
-            if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
-                this.$socket.send(JSON.stringify({
-                    type: 'cmdStdin', // 事件
-                    data: 'cd ~',
-                }))
-                this.$socket.send(JSON.stringify({
-                    type: 'cmdStdin', // 事件
-                    data: '\n',
-                }))
+            // if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+            //     this.$socket.send(JSON.stringify({
+            //         type: 'cmdStdin', // 事件
+            //         data: 'cd ~',
+            //     }))
+            //     this.$socket.send(JSON.stringify({
+            //         type: 'cmdStdin', // 事件
+            //         data: '\n',
+            //     }))
 
-                console.log('发送消息cmdStdin成功！')
-                this.$socket.send(JSON.stringify({
-                    type: 'ptyInfo', // 事件
-                    data: {
-                        cols: this.terminal.cols,
-                        rows: this.terminal.rows,
-                    }
-                }))
-            } else {
-                console.log('WebSocket not connected! cmdStdin failed!')
-            }
+            //     console.log('发送消息cmdStdin成功！')
+            //     this.$socket.send(JSON.stringify({
+            //         type: 'ptyInfo', // 事件
+            //         data: {
+            //             cols: this.terminal.cols,
+            //             rows: this.terminal.rows,
+            //         }
+            //     }))
+            //     console.log('发送消息ptyInfo成功！')
+            // } else {
+            //     console.log('WebSocket not connected! cmdStdin failed!')
+            // }
         },
         sendData() {
             // 绑定数据输入事件
@@ -123,18 +124,31 @@ export default {
     },
     //失活
     deactivated() {
-        this.receptionCount = 0
+        // this.receptionCount = 0
     },
-    // activated() {
-    //     this.$socket.send(JSON.stringify({
-    //         type: 'ptyInfo', // 事件
-    //         data: {
-    //             cols: this.terminal.cols,
-    //             rows: this.terminal.rows,
-    //         }
-    //     }))
-    //     console.log('激活！发送消息ptyInfo成功！')
-    // },
+    beforeDestroy() {
+        this.receptionCount = 0
+        if (this.terminal) {
+            this.terminal.dispose()
+        }
+    },
+    activated() {
+        this.terminal.focus();
+        if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+            this.$socket.send(JSON.stringify({
+                type: 'ptyInfo', // 事件
+                data: {
+                    cols: this.terminal.cols,
+                    rows: this.terminal.rows,
+                }
+            }))
+            console.log('激活！发送消息cmdStdin成功！')
+        } else {
+            console.log('WebSocket not connected! cmdStdin failed!')
+        }
+
+        console.log('激活！发送消息ptyInfo成功！')
+    },
 };
 </script>
 
@@ -151,5 +165,6 @@ export default {
 
 .terminalSys .terminal .xterm-viewport {
     overflow-y: auto !important;
+    /* overflow-x: auto !important; */
 }
 </style>
