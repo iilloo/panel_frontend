@@ -134,20 +134,20 @@ export default {
     },
     activated() {
         this.terminal.focus();
-        if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
-            this.$socket.send(JSON.stringify({
-                type: 'ptyInfo', // 事件
-                data: {
-                    cols: this.terminal.cols,
-                    rows: this.terminal.rows,
-                }
-            }))
-            console.log('激活！发送消息cmdStdin成功！')
-        } else {
-            console.log('WebSocket not connected! cmdStdin failed!')
-        }
+        // if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+        //     this.$socket.send(JSON.stringify({
+        //         type: 'ptyInfo', // 事件
+        //         data: {
+        //             cols: this.terminal.cols,
+        //             rows: this.terminal.rows,
+        //         }
+        //     }))
+        //     console.log('激活！发送消息cmdStdin成功！')
+        // } else {
+        //     console.log('WebSocket not connected! cmdStdin failed!')
+        // }
 
-        console.log('激活！发送消息ptyInfo成功！')
+        // console.log('激活！发送消息ptyInfo成功！')
     },
 };
 </script>
