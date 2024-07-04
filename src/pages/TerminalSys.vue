@@ -107,7 +107,7 @@ export default {
         onmessage(event) {
             const data = JSON.parse(event.data)
             if (data.type === 'cmdStdout') {
-                console.log('Terminal websocket message', data.type, data.data)
+                // console.log('Terminal websocket message', data.type, data.data)
                 if (this.receptionCount === 0) {
                     this.receptionCount++
 
@@ -134,18 +134,20 @@ export default {
     },
     activated() {
         this.terminal.focus();
-        // if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
-        //     this.$socket.send(JSON.stringify({
-        //         type: 'ptyInfo', // 事件
-        //         data: {
-        //             cols: this.terminal.cols,
-        //             rows: this.terminal.rows,
-        //         }
-        //     }))
-        //     console.log('激活！发送消息cmdStdin成功！')
-        // } else {
-        //     console.log('WebSocket not connected! cmdStdin failed!')
-        // }
+        this.fitAddon.fit();
+        if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+            this.$socket.send(JSON.stringify({
+                type: 'ptyInfo', // 事件
+                data: {
+                    cols: this.terminal.cols,
+                    rows: this.terminal.rows,
+                }
+            }))
+            console.log('激活！发送消息ptyInfo成功！')
+            console.log(this.terminal.cols, this.terminal.rows)
+        } else {
+            console.log('WebSocket not connected! ptyInfo failed!')
+        }
 
         // console.log('激活！发送消息ptyInfo成功！')
     },
@@ -165,6 +167,6 @@ export default {
 
 .terminalSys .terminal .xterm-viewport {
     overflow-y: auto !important;
-    /* overflow-x: auto !important; */
-}
+    /* overflow-x: scroll !important; */
+} 
 </style>
