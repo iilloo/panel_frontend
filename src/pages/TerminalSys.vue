@@ -14,12 +14,30 @@ export default {
         return {
             terminal: null,
             fitAddon: null,
-            receptionCount: 0,
+            windowSize: {
+                width: window.innerWidth,
+                height: window.innerHeight
+            },
+            debouncedSendPtyInfo: null, // 用于存储防抖函数实例
+            activeCount: 0,
         };
     },
     mounted() {
         this.initTerminal();
         this.sendData();
+        this.debouncedSendPtyInfo = this.debounce(this.sendPtyInfo, 300)
+        window.addEventListener('resize', this.updateWindowSize);
+
+
+    },
+    beforeDestroy() {
+        if (this.terminal) {
+            this.terminal.dispose()
+        }
+        window.removeEventListener('resize', this.updateWindowSize)
+        this.activeCount = 0;
+        console.log(this.activeCount)
+        console.log('TerminalSys beforeDestroy')
     },
     methods: {
         initTerminal() {
@@ -53,44 +71,10 @@ export default {
             this.fitAddon.fit();
             this.terminal.writeln('Welcome to xterm.js in Vue!');
             this.terminal.focus();
-            // 发送初始命令
-            // if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
-            //     this.$socket.send(JSON.stringify({
-            //         type: 'cmdStdin', // 事件
-            //         data: 'cd ~',
-            //     }))
-            //     this.$socket.send(JSON.stringify({
-            //         type: 'cmdStdin', // 事件
-            //         data: '\n',
-            //     }))
-
-            //     console.log('发送消息cmdStdin成功！')
-            //     this.$socket.send(JSON.stringify({
-            //         type: 'ptyInfo', // 事件
-            //         data: {
-            //             cols: this.terminal.cols,
-            //             rows: this.terminal.rows,
-            //         }
-            //     }))
-            //     console.log('发送消息ptyInfo成功！')
-            // } else {
-            //     console.log('WebSocket not connected! cmdStdin failed!')
-            // }
         },
         sendData() {
             // 绑定数据输入事件
             this.terminal.onData((data) => {
-                // const printable = data.match(/[\x20-\x7E]/); // 匹配可打印字符的正则表达式
-                // if (data === '\r' || data === '\x0D') {
-                //     // 处理回车键，添加换行
-                //     this.terminal.writeln('');
-                // } else if (data === '\x08' || data === '\x7F') {
-                //     // 处理退格键，删除最后一个字符
-                //     this.terminal.write('\b \b');
-                // } else if (printable) {
-                //     // 处理可打印字符
-                //     this.terminal.write(data);
-                // }
                 if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
                     this.$socket.send(JSON.stringify({
                         type: 'cmdStdin', // 事件
@@ -101,19 +85,43 @@ export default {
                     console.log('WebSocket not connected! cmdStdin failed!')
                 }
             });
-        }
+        },
+        updateWindowSize() {
+            this.windowSize.width = window.innerWidth;
+            this.windowSize.height = window.innerHeight;
+        },
+        debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        },
+        sendPtyInfo() {
+            if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
+                this.$socket.send(JSON.stringify({
+                    type: 'ptyInfo', // 事件
+                    data: {
+                        cols: this.terminal.cols,
+                        rows: this.terminal.rows,
+                    }
+                }))
+                console.log('发送消息ptyInfo成功！')
+                console.log(this.terminal.cols, this.terminal.rows)
+            } else {
+                console.log('WebSocket not connected! ptyInfo failed!')
+            }
+        },
+
     },
     sockets: {
         onmessage(event) {
             const data = JSON.parse(event.data)
             if (data.type === 'cmdStdout') {
                 // console.log('Terminal websocket message', data.type, data.data)
-                if (this.receptionCount === 0) {
-                    this.receptionCount++
-
-                } else if (this.receptionCount === 1) {
-                    this.terminal.write(data.data)
-                }
+                this.terminal.write(data.data)
             } else if (data.type === "cmdError") {
                 console.log('HostStatus websocket message', data.type, data.data)
             }
@@ -122,34 +130,37 @@ export default {
             console.log('WebSocket error' + err)
         },
     },
+    computed: {
+    },
+    watch: {
+        //监听属性
+        windowSize: {
+            deep: true, //监视多级结构的属性
+            handler() {
+                //
+                this.fitAddon.fit();
+                if (this.debouncedSendPtyInfo) {
+                    this.debouncedSendPtyInfo();
+                }
+            }
+
+        }
+
+    },
     //失活
     deactivated() {
         // this.receptionCount = 0
-    },
-    beforeDestroy() {
-        this.receptionCount = 0
-        if (this.terminal) {
-            this.terminal.dispose()
-        }
+        this.activeCount = 0;
+        console.log(this.activeCount)
     },
     activated() {
         this.terminal.focus();
         this.fitAddon.fit();
-        if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
-            this.$socket.send(JSON.stringify({
-                type: 'ptyInfo', // 事件
-                data: {
-                    cols: this.terminal.cols,
-                    rows: this.terminal.rows,
-                }
-            }))
-            console.log('激活！发送消息ptyInfo成功！')
-            console.log(this.terminal.cols, this.terminal.rows)
-        } else {
-            console.log('WebSocket not connected! ptyInfo failed!')
+        if (this.activeCount === 0) {
+            this.sendPtyInfo();
+            this.activeCount = 1;
+            console.log(this.activeCount)
         }
-
-        // console.log('激活！发送消息ptyInfo成功！')
     },
 };
 </script>
@@ -168,5 +179,5 @@ export default {
 .terminalSys .terminal .xterm-viewport {
     overflow-y: auto !important;
     /* overflow-x: scroll !important; */
-} 
+}
 </style>
