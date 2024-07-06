@@ -120,7 +120,7 @@ export default {
         onmessage(event) {
             const data = JSON.parse(event.data)
             if (data.type === 'cmdStdout') {
-                // console.log('Terminal websocket message', data.type, data.data)
+                console.log('Terminal websocket message', data.type, data.data)
                 this.terminal.write(data.data)
             } else if (data.type === "cmdError") {
                 console.log('HostStatus websocket message', data.type, data.data)

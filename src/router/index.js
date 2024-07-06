@@ -15,12 +15,12 @@ import TerminalSys from "@/pages/TerminalSys.vue";
 const router = new VueRouter({      // VueRouter configuration object
     routes: [
         {
-            path: "/Login",
+            path: "/login",
             name: "login",
             component: LoginView
         },
         {
-            path: "/Home",
+            path: "/home",
             name: "home",
             component: HomeView,
             children: [
@@ -89,24 +89,28 @@ const router = new VueRouter({      // VueRouter configuration object
 router.beforeEach((to, from, next) => {
     // console.log('topath:', to.fullPath);
     // console.log('frompath:', from.fullPath);
+    if (to.path === from.path) {
+        return next(false);
+    }
     //获取token
     const token = window.localStorage.getItem('token');
+    console.log('token:', token);
     //判断
     if (to.path === '/login') {
-        //如果是登录页面，直接放行
-        next();
+        return next();
     } else {
-        //如果不是登录页面
-        //判断是否有token
         if (!token) {
-            //如果没有token，跳转到登录页面
-            next('/login');
+            console.log('no token');
+            next({
+                path: '/login',
+                query: { redirect: to.fullPath }
+            });
         } else {
-            //如果有token，直接放行
-            next();
+            return next();
         }
     }
-}); 
+    // return;
+});
 
 // Add empty function
 
