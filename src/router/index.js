@@ -11,6 +11,9 @@ import SoftwareManagement from "@/pages/SoftwareManagement.vue";
 import TerminalSystem from "@/pages/TerminalSystem.vue";
 import TimingTask from "@/pages/TimingTask.vue";
 import TerminalSys from "@/pages/TerminalSys.vue";
+import instance from "@/utils/axios.js";
+
+// import vm from "@/main.js";
 
 const router = new VueRouter({      // VueRouter configuration object
     routes: [
@@ -85,31 +88,53 @@ const router = new VueRouter({      // VueRouter configuration object
     ]
 
 }); // Add closing curly brace
-//全局路由守卫，初始化和路由切换时触发
-router.beforeEach((to, from, next) => {
-    // console.log('topath:', to.fullPath);
-    // console.log('frompath:', from.fullPath);
-    if (to.path === from.path) {
-        return next(false);
-    }
-    //获取token
+
+async function isLogin() {
     const token = window.localStorage.getItem('token');
-    console.log('token:', token);
-    //判断
-    if (to.path === '/login') {
-        return next();
+    var flag = false;
+    if (token === null) {
+        console.log('token为空');
+        return flag;
     } else {
-        if (!token) {
-            console.log('no token');
-            next({
-                path: '/login',
-                query: { redirect: to.fullPath }
-            });
-        } else {
-            return next();
+        try {
+            const response = await instance.get('/checkToken');
+            if (response.code === 200) {
+                console.log(response.code);
+                return true;
+            } else {
+                return false;
+            }
+        } catch (err) {
+            console.log('请求失败');
+            console.log(err);
+            return false;
         }
     }
-    // return;
+}
+//全局路由守卫，初始化和路由切换时触发
+router.beforeEach((to, from, next) => {
+    console.log('------------------');
+    console.log('form:' + from.path);
+    console.log('to:' + to.path);
+    console.log('----------');
+    (async () => {
+        let flag = await isLogin();
+        console.log(flag);
+        if (to.path === '/login') {
+            if (flag) {
+                return next('/home');
+            } else {
+                return next();
+            }
+        }
+        if (from.path === '/login') {
+            return next();
+        }
+        if (!flag) {
+            return next('/login');
+        }
+        return next();
+    })();
 });
 
 // Add empty function

@@ -3,13 +3,13 @@
         <keep-alive include="TerminalSys">
             <router-view></router-view>
         </keep-alive>
-        
+
     </div>
 </template>
 
 <script>
 
-
+// import instance from '@/utils/axios';
 export default {
     name: 'MainBody',
     data() {
@@ -19,11 +19,18 @@ export default {
     },
     created() {
         this.$bus.$on('routeChange', (pathName) => {
-            if (this.$route.name !== pathName) {
-                this.$router.push({
-                    name: pathName,
-                })
+            if (this.$route.name === pathName) {
+                return
             }
+            this.$router.push({
+                name: pathName,
+            }).catch(err => {
+               if (err.name !== 'NavigationDuplicated') {
+                   console.log('err:NavigationDuplicated')
+               } else {
+                   throw err
+               }
+            })
         })
     },
     mounted() {
