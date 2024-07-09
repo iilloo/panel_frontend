@@ -99,7 +99,6 @@ async function isLogin() {
         try {
             const response = await instance.get('/checkToken');
             if (response.code === 200) {
-                console.log(response.code);
                 return true;
             } else {
                 return false;
@@ -118,19 +117,16 @@ router.beforeEach((to, from, next) => {
     console.log('to:' + to.path);
     console.log('----------');
     (async () => {
-        let flag = await isLogin();
-        console.log(flag);
+        
         if (to.path === '/login') {
-            if (flag) {
-                return next('/home');
-            } else {
-                return next();
-            }
+            return next();
         }
         if (from.path === '/login') {
             return next();
         }
+        let flag = await isLogin();
         if (!flag) {
+            window.localStorage.removeItem('token');
             return next('/login');
         }
         return next();

@@ -42,13 +42,13 @@ instance.interceptors.response.use(
             // 针对401 Unauthorized做特殊处理
             vm.$message.error(errorMsg);
             // 清除token
-            // localStorage.removeItem('token');
-            // // 跳转到登录页面
-            // if (vm.$router.currentRoute.path !== '/login') {
-            //     console.log('跳转到登录页面');
-            //     vm.$router.push('/login');
+            window.localStorage.removeItem('token');
+            // 跳转到登录页面
+            if (vm.$router.currentRoute.path !== '/login') {
+                console.log('跳转到登录页面');
+                vm.$router.push('/login');
 
-            // }
+            }
         } else if (status === 400) {
             vm.$message.error(data.msg);
         } else if (status === 404) {
