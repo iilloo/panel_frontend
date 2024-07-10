@@ -16,7 +16,7 @@ export default {
     data() {
         return {
             items: [
-                {id: "1", name: '在线终端', pathname: 'terminalSystem'},
+                {id: "1", name: '在线终端', pathname: 'terminalSys'},
                 {id: "2", name: '文件管理', pathname: 'fileSystem'},
                 {id: "3", name: '主机状态', pathname: 'hostStatus'},
                 {id: "4", name: '定时任务', pathname: 'timingTask'},
@@ -24,7 +24,6 @@ export default {
                 {id: "6", name: '端口管理', pathname: 'portManagement'},
                 {id: "7", name: '进程管理', pathname: 'processManagement'},
                 {id: "8", name: '软件管理', pathname: 'softwareManagement'},
-                {id: "9", name: '在线终端', pathname: 'terminalSys'},
                 // {id: "9", name: '可执行文件管理', pathname: 'executableFileManagement'},
             ],
         }

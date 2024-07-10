@@ -20,23 +20,18 @@ export default {
             },
             debouncedSendPtyInfo: null, // 用于存储防抖函数实例
             activeCount: 0,
+            isActived: false,
         };
     },
     mounted() {
         this.initTerminal();
         this.sendData();
-        this.debouncedSendPtyInfo = this.debounce(this.sendPtyInfo, 300)
-        window.addEventListener('resize', this.updateWindowSize);
-
-
     },
     beforeDestroy() {
         if (this.terminal) {
             this.terminal.dispose()
         }
-        window.removeEventListener('resize', this.updateWindowSize)
         this.activeCount = 0;
-        console.log(this.activeCount)
         console.log('TerminalSys beforeDestroy')
     },
     methods: {
@@ -90,6 +85,7 @@ export default {
             this.windowSize.width = window.innerWidth;
             this.windowSize.height = window.innerHeight;
         },
+        // 防抖函数
         debounce(func, delay) {
             let timeout;
             return function (...args) {
@@ -138,6 +134,7 @@ export default {
             deep: true, //监视多级结构的属性
             handler() {
                 //
+                console.log('windowSize changed')
                 this.fitAddon.fit();
                 if (this.debouncedSendPtyInfo) {
                     this.debouncedSendPtyInfo();
@@ -149,17 +146,18 @@ export default {
     },
     //失活
     deactivated() {
-        // this.receptionCount = 0
         this.activeCount = 0;
-        console.log(this.activeCount)
+        window.removeEventListener('resize', this.updateWindowSize)
     },
     activated() {
+        this.debouncedSendPtyInfo = this.debounce(this.sendPtyInfo, 300)
+        window.addEventListener('resize', this.updateWindowSize);
         this.terminal.focus();
         this.fitAddon.fit();
         if (this.activeCount === 0) {
+            console.log('TerminalSys activated')
             this.sendPtyInfo();
             this.activeCount = 1;
-            console.log(this.activeCount)
         }
     },
 };

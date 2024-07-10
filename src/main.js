@@ -27,8 +27,8 @@ Vue.use(ElementUI)
 Vue.use(VModal)
 Vue.use(Terminal)
 //使用websocket插件，并配置一些参数
-Vue.use(VueNativeSock, 
-  'ws://192.168.124.101:8888/ws', 
+Vue.use(VueNativeSock,
+  'ws://192.168.124.101:8888/ws',
   createWebSocketConfig())
 
 // 关闭生产提示
@@ -43,6 +43,11 @@ const vm = new Vue({
   beforeCreate() {
     Vue.prototype.$bus = EventBus; //安装全局事件总线
   },
+  created() {
+    this.$bus.$on('login', () => {
+      this.$connect()
+    })
+  },
   sockets: {
     onopen() {
       console.log('websocket open')
@@ -50,13 +55,15 @@ const vm = new Vue({
         type: 'token',
         data: localStorage.getItem('token')
       })
-      this.sendMsg(msg)
+      if (msg.data !== null) {
+        this.sendMsg(msg)
+      }
     },
     onmessage(event) {
       const data = JSON.parse(event.data)
       if (data.type === 'token') {
         localStorage.setItem('token', data.data)
-      } else if (data.type === 'error'){
+      } else if (data.type === 'error') {
         console.log('websocket message', data.type, data.data)
       }
     },
@@ -65,14 +72,15 @@ const vm = new Vue({
     },
     onclose() {
       console.log('websocket close')
+
       setTimeout(() => {
-        this.$connect()
+          this.$connect()
       }, 3000)
     },
   },
   methods: {
     sendMsg(msg) {
-      for (let i = 0; i < 100; i++){
+      for (let i = 0; i < 100; i++) {
         if (this.$socket && this.$socket.readyState === WebSocket.OPEN) {
           console.log('websocket ready')
           this.$socket.send(msg)
@@ -84,7 +92,11 @@ const vm = new Vue({
     },
   },
   mounted() {
-    this.$connect()
+    console.log('mounted')
+    console.log(this.$router.currentRoute.path )
+    if (this.$router.currentRoute.path !== '/login') {
+      this.$connect()
+    }
   },
   beforeDestroy() {
     this.$disconnect()
