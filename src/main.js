@@ -19,6 +19,7 @@ import EventBus from './eventBus/event_bus'
 //引入websocket插件
 import VueNativeSock from 'vue-native-websocket'
 import createWebSocketConfig from './utils/websocket'
+import instance from './utils/axios'
 
 
 //全局插件
@@ -40,6 +41,9 @@ const vm = new Vue({
   el: '#app',
   render: h => h(App),
   router: router,
+  data: {
+    reconnectID: null
+  },
   beforeCreate() {
     Vue.prototype.$bus = EventBus; //安装全局事件总线
   },
@@ -73,7 +77,7 @@ const vm = new Vue({
     onclose() {
       console.log('websocket close')
 
-      setTimeout(() => {
+      this.reconnectID =  setTimeout(() => {
           this.$connect()
       }, 3000)
     },
@@ -94,12 +98,29 @@ const vm = new Vue({
   mounted() {
     console.log('mounted')
     console.log(this.$router.currentRoute.path )
-    if (this.$router.currentRoute.path !== '/login') {
-      this.$connect()
-    }
+    instance.get('/checkToken').then(res => {
+      console.log(res)
+      if (res.code === 200) {
+        console.log('token有效')
+      } else {
+        console.log('token无效')
+        this.$router.push('/login')
+      }
+    }).catch(err => {
+      console.log(err)
+    })
+    setTimeout(() => {
+      console.log(this.$router.currentRoute.path )
+      if (this.$router.currentRoute.path !== '/login') {
+        this.$connect()
+      }
+    }, 100)
+    
   },
   beforeDestroy() {
     this.$disconnect()
+    clearTimeout(this.reconnectID)
+
   }
 })
 window.vm = vm
