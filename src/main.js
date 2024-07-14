@@ -97,24 +97,30 @@ const vm = new Vue({
   },
   mounted() {
     console.log('mounted')
-    console.log(this.$router.currentRoute.path )
+    // console.log(this.$router.currentRoute.path )
+    const token = localStorage.getItem('token')
+    if (token === null) {
+      // this.$router.push('/login')
+      return
+    }
     instance.get('/checkToken').then(res => {
       console.log(res)
       if (res.code === 200) {
         console.log('token有效')
+        this.$connect()
       } else {
         console.log('token无效')
-        this.$router.push('/login')
+        // this.$router.push('/login')
       }
     }).catch(err => {
       console.log(err)
     })
-    setTimeout(() => {
-      console.log(this.$router.currentRoute.path )
-      if (this.$router.currentRoute.path !== '/login') {
-        this.$connect()
-      }
-    }, 100)
+    // setTimeout(() => {
+    //   console.log(this.$router.currentRoute.path )
+    //   if (this.$router.currentRoute.path !== '/login') {
+    //     this.$connect()
+    //   }
+    // }, 100)
     
   },
   beforeDestroy() {
