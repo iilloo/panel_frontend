@@ -1,5 +1,5 @@
 <template>
-    <div class="fileSys">
+    <div v-loading="loading" class="fileSys">
         <div class="header">
             <div class="headerLeft">
                 <el-button @click="backToPre" type="info" icon="el-icon-back" plain size="mini"></el-button>
@@ -20,7 +20,7 @@
             </div>
         </div>
         <div class="table">
-            <el-table v-loading="loading" height="100%" @selection-change="handleSelectionChange"
+            <el-table  height="100%" @selection-change="handleSelectionChange"
                 @row-dblclick="handleRowDoubleClick" :data="currentDirContents" style="width: 100%" border>
                 <el-table-column type="selection" width="40px">
                 </el-table-column>
@@ -77,12 +77,12 @@ export default {
                     message: '路径格式错误！',
                     type: 'error'
                 });
-                return
+                return Promise.resolve(false)
             } else {
                 // console.log('路径格式正确')
             }
             this.loading = true
-            instance.get('/fileSys/search', {
+            return instance.get('/fileSys/search', {
                 params: {
                     path: this.path
                 },
@@ -96,10 +96,12 @@ export default {
                     //     message: '查询成功！',
                     //     type: 'success'
                     // });
+                    return true
                 })
                 .catch(error => {
                     console.log(error)
                     this.path = localStorage.getItem('path')
+                    return false
                 })
                 .finally(() => {
                     this.loading = false
@@ -159,11 +161,15 @@ export default {
             }
         },
         refreshFile() {
-            this.sendPath()
-            this.$message({
-                message: '刷新成功！',
-                type: 'success'
-            });
+            this.sendPath().then((res) => {
+                if (res) {
+                    this.$message({
+                        message: '刷新成功！',
+                        type: 'success'
+                    });
+                }
+            })
+            
         },
         backToHome() {
             this.path = '/home/kazusa/'
