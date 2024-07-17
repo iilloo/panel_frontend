@@ -5,5 +5,7 @@ export default function createWebSocketConfig() {
         // reconnectionDelay: 3000, // 重连间隔
         format: 'json',
         connectManually: true,
+        autoConnect: false, // 是否自动连接
+
     };
 }

@@ -20,8 +20,8 @@
             </div>
         </div>
         <div class="table">
-            <el-table height="100%" @selection-change="handleSelectionChange" @row-dblclick="handleRowDoubleClick"
-                :data="currentDirContents" style="width: 100%" border>
+            <el-table v-loading="loading" height="100%" @selection-change="handleSelectionChange"
+                @row-dblclick="handleRowDoubleClick" :data="currentDirContents" style="width: 100%" border>
                 <el-table-column type="selection" width="40px">
                 </el-table-column>
                 <el-table-column label="名称" width="300">
@@ -64,6 +64,7 @@ export default {
             path: '',
             selectedRows: [],// 用于保存选中的行文件名称
             selectedRow: {},// 用于保存选中的行文件数据
+            loading: false,
         }
     },
     methods: {
@@ -80,6 +81,7 @@ export default {
             } else {
                 // console.log('路径格式正确')
             }
+            this.loading = true
             instance.get('/fileSys/search', {
                 params: {
                     path: this.path
@@ -99,8 +101,12 @@ export default {
                     console.log(error)
                     this.path = localStorage.getItem('path')
                 })
+                .finally(() => {
+                    this.loading = false
+                })
         },
         readFile(path, name) {
+            this.loading = true
             instance.get('/fileSys/read', {
                 params: {
                     path: path,
@@ -133,6 +139,9 @@ export default {
                 .catch(error => {
                     console.log(error)
                 })
+                .finally(() => {
+                    this.loading = false
+                })
         },
         // 双击文件夹进入
         handleRowDoubleClick(row, column) {
@@ -144,6 +153,7 @@ export default {
                 this.path = row.path
                 this.sendPath()
             } else {
+                // console.log(row.path, row.name)
                 this.readFile(row.path, row.name)
 
             }
@@ -170,6 +180,7 @@ export default {
             this.sendPath()
         },
         addRequest(name, isDir) {
+            this.loading = true
             instance.post('/fileSys/add', {
                 path: this.path,
                 name: name,
@@ -186,8 +197,12 @@ export default {
                 .catch(error => {
                     console.log(error)
                 })
+                .finally(() => {
+                    this.loading = false
+                })
         },
         addFile() {
+            
             this.$prompt('请输入文件名', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
@@ -254,6 +269,7 @@ export default {
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(() => {
+                this.loading = true
                 instance.post('/fileSys/delete', {
                     path: this.path,
                     names: this.selectedRows,
@@ -272,6 +288,9 @@ export default {
                     })
                     .catch(error => {
                         console.log(error)
+                    })
+                    .finally(() => {
+                        this.loading = false
                     })
             }).catch(() => {
                 this.$message({
@@ -306,6 +325,7 @@ export default {
                         return
                     }
                 }
+                this.loading = true
                 instance.post(`/fileSys/rename/${this.selectedRow.name}/${value}`, {
                     path: this.path
                 })
@@ -319,6 +339,9 @@ export default {
                     })
                     .catch(error => {
                         console.log(error)
+                    })
+                    .finally(() => {
+                        this.loading = false
                     })
             }).catch(() => {
                 this.$message({
@@ -395,12 +418,13 @@ export default {
 }
 
 .fileSys .header .headerLeft {
-    flex: 0 0 auto; 
+    flex: 0 0 auto;
     display: flex;
 }
+
 .fileSys .header .headerRight {
     flex: 0 0 auto;
-    display: flex; 
+    display: flex;
 }
 
 .fileSys .el-button {

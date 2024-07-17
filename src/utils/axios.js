@@ -2,7 +2,7 @@ import axios from 'axios'
 import vm from '../main.js'
 const instance = axios.create({
     baseURL: 'http://192.168.124.101:8888',
-    timeout: 1000
+    timeout: 10000
 })
 
 // 请求拦截器
@@ -35,6 +35,10 @@ instance.interceptors.response.use(
         return response.data
     },
     error => {
+        if (error.response === undefined) {
+            vm.$message.error(error.message);
+            return Promise.reject(error)
+        }
         // 对响应错误做点什么
         const { status, data } = error.response
         if (status === 401) {
