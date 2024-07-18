@@ -12,6 +12,7 @@ import TerminalSystem from "@/pages/TerminalSystem.vue";
 import TimingTask from "@/pages/TimingTask.vue";
 import TerminalSys from "@/pages/TerminalSys.vue";
 import instance from "@/utils/axios.js";
+import EventBus from "@/eventBus/event_bus";
 
 // import vm from "@/main.js";
 
@@ -112,12 +113,13 @@ async function isLogin() {
 }
 //全局路由守卫，初始化和路由切换时触发
 router.beforeEach((to, from, next) => {
+    EventBus.$emit('changeLoading', true);
     console.log('------------------');
     console.log('form:' + from.path);
     console.log('to:' + to.path);
     console.log('----------');
     (async () => {
-        
+
         if (to.path === '/login') {
             return next();
         }
@@ -125,12 +127,14 @@ router.beforeEach((to, from, next) => {
             return next();
         }
         let flag = await isLogin();
+        EventBus.$emit('changeLoading', false);
         if (!flag) {
             window.localStorage.removeItem('token');
             return next('/login');
         }
         return next();
     })();
+    // EventBus.$emit('changeLoading', false);
 });
 
 // Add empty function

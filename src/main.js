@@ -42,15 +42,29 @@ const vm = new Vue({
   render: h => h(App),
   router: router,
   data: {
-    reconnectID: null
+    reconnectID: null,
+    loading: null,
   },
   beforeCreate() {
     Vue.prototype.$bus = EventBus; //安装全局事件总线
   },
   created() {
+    //当成功登录时，调用$connect方法，连接websocket
     this.$bus.$on('login', () => {
       this.$connect()
     })
+    // //当路由跳转时，先全屏显示loading，跳转结束后再关闭loading
+    // this.$bus.$on('startLoading', () => {
+    //   this.loading = this.$loading({
+    //     lock: true,
+    //     text: 'Loading',
+    //     spinner: 'el-icon-loading',
+    //     background: 'rgba(0, 0, 0, 0.7)'
+    //   });
+    // })
+    // this.$bus.$on('closeLoading', () => {
+    //   this.loading.close();
+    // })
   },
   sockets: {
     onopen() {
@@ -77,8 +91,8 @@ const vm = new Vue({
     onclose() {
       console.log('websocket close')
 
-      this.reconnectID =  setTimeout(() => {
-          this.$connect()
+      this.reconnectID = setTimeout(() => {
+        this.$connect()
       }, 3000)
     },
   },
@@ -121,7 +135,7 @@ const vm = new Vue({
     //     this.$connect()
     //   }
     // }, 100)
-    
+
   },
   beforeDestroy() {
     this.$disconnect()

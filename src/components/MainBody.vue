@@ -9,16 +9,19 @@
 
 <script>
 
+
+
 // import instance from '@/utils/axios';
 export default {
     name: 'MainBody',
     data() {
         return {
-
+            
         }
     },
     created() {
         this.$bus.$on('routeChange', (pathName) => {
+
             if (this.$route.name === pathName) {
                 return
             }
@@ -31,6 +34,7 @@ export default {
                    throw err
                }
             })
+
         })
     },
     mounted() {

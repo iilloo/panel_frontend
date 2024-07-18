@@ -1,5 +1,5 @@
 <template>
-    <div class="fileEditor">
+    <div v-loading = "loading" class="fileEditor">
         <el-row>
             <el-button :disabled="isSave" @click="saveFile" size="mini" type="primary" class="saveFile">保存</el-button>
             <el-button size="mini" plain v-if="fileName" class="fileName">{{ fileName }}</el-button>
@@ -18,7 +18,7 @@
 </template>
 
 <script>
-
+import EventBus from '../eventBus/event_bus'
 export default {
     name: 'FileEditComponent',
     data() {
@@ -26,6 +26,7 @@ export default {
             fileName: this.name,
             textContent: this.text,
             isSave: true,
+            loading: false,
         }
     },
     props: {
@@ -42,8 +43,16 @@ export default {
     },
     methods: {
         saveFile() {
-            this.$bus.$emit('saveFile', this.textContent, this.fileName);
-            this.isSave = true;
+            EventBus.$emit('saveFile', this.textContent, this.fileName, (res) => {
+                if (res) {
+                    console.log(res);
+                    this.isSave = false;
+                    this.$message.success('保存成功');
+                } else {
+                    this.$message.error('保存失败');
+
+                }
+            });
         },
         closeFile() {
             if (this.isSave) {

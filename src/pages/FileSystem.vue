@@ -20,8 +20,8 @@
             </div>
         </div>
         <div class="table">
-            <el-table  height="100%" @selection-change="handleSelectionChange"
-                @row-dblclick="handleRowDoubleClick" :data="currentDirContents" style="width: 100%" border>
+            <el-table height="100%" @selection-change="handleSelectionChange" @row-dblclick="handleRowDoubleClick"
+                :data="currentDirContents" style="width: 100%" border>
                 <el-table-column type="selection" width="40px">
                 </el-table-column>
                 <el-table-column label="名称" width="300">
@@ -169,7 +169,7 @@ export default {
                     });
                 }
             })
-            
+
         },
         backToHome() {
             this.path = '/home/kazusa/'
@@ -208,7 +208,7 @@ export default {
                 })
         },
         addFile() {
-            
+
             this.$prompt('请输入文件名', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
@@ -357,11 +357,12 @@ export default {
             });
 
         },
-        sendContent(text, name) {
+        sendContent(text1, name1) {
+            console.log('sendContent')
             instance.put('/fileSys/write', {
                 path: this.path,
-                name: name,
-                text: text,
+                name: name1,
+                text: text1,
             })
                 .then(response => {
                     console.log(response)
@@ -373,7 +374,26 @@ export default {
                 .catch(error => {
                     console.log(error)
                 })
-        }
+        },
+        async sendContent1(text1, name1) {
+            console.log('sendContent')
+            try {
+                const response = await instance.put('/fileSys/write', {
+                    path: this.path,
+                    name: name1,
+                    text: text1,
+                })
+                console.log(response)
+                if (response.status === 200) {
+                    return true
+                } else {
+                    return false
+                }
+            } catch (error) {
+                console.log(error)
+                return false
+            }
+        },
     },
 
     mounted() {
@@ -382,8 +402,9 @@ export default {
         this.sendPath()
     },
     created() {
-        this.$bus.$on('saveFile', (text, name) => {
-            this.sendContent(text, name)
+        this.$bus.$on('saveFile', (text1, name1, callback) => {
+            const res = this.sendContent1(text1, name1)
+            callback(res)
         })
     },
     components: {
