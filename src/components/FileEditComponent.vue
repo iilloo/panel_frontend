@@ -1,5 +1,5 @@
 <template>
-    <div v-loading = "loading" class="fileEditor">
+    <div v-loading="loading" class="fileEditor">
         <el-row>
             <el-button :disabled="isSave" @click="saveFile" size="mini" type="primary" class="saveFile">保存</el-button>
             <el-button size="mini" plain v-if="fileName" class="fileName">{{ fileName }}</el-button>
@@ -43,18 +43,28 @@ export default {
     },
     methods: {
         saveFile() {
-            EventBus.$emit('saveFile', this.textContent, this.fileName, (res) => {
-                if (res) {
-                    console.log(res);
-                    this.isSave = false;
-                    this.$message.success('保存成功');
-                } else {
-                    this.$message.error('保存失败');
-
-                }
+            //开始loading
+            this.loading = true;
+            return new Promise((resolve) => {
+                EventBus.$emit('saveFile', this.textContent, this.fileName, (res) => {
+                    console.log('bbbbbb');
+                    if (res) {
+                        console.log(res);
+                        this.isSave = true;
+                        this.$message.success('保存成功');
+                        resolve(true);
+                    } else {
+                        this.$message.error('保存失败');
+                        resolve(false);
+                    }
+                    //结束loading
+                    this.loading = false;
+                });
             });
+
+
         },
-        closeFile() {
+        closeFile: async function () {
             if (this.isSave) {
                 this.$emit('close');
                 return;
@@ -64,10 +74,10 @@ export default {
                 confirmButtonText: '保存并关闭',
                 cancelButtonText: '直接关闭',
                 type: 'warning'
-            }).then((action) => {
-                this.saveFile();
+            }).then(async (action) => {
+                const isSave = await this.saveFile();
                 // this.$emit('close');
-                if (action === 'confirm') {
+                if (isSave && action === 'confirm') {
                     this.$emit('close');
                 }
             }).catch(

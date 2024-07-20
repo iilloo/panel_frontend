@@ -50,9 +50,7 @@ const vm = new Vue({
   },
   created() {
     //当成功登录时，调用$connect方法，连接websocket
-    this.$bus.$on('login', () => {
-      this.$connect()
-    })
+    this.$bus.$on('login', this.loginHandler)
     // //当路由跳转时，先全屏显示loading，跳转结束后再关闭loading
     // this.$bus.$on('startLoading', () => {
     //   this.loading = this.$loading({
@@ -108,6 +106,10 @@ const vm = new Vue({
         }
       }
     },
+    loginHandler() {
+      console.log('loginHandler')
+      this.$router.push('/login')
+    }
   },
   mounted() {
     console.log('mounted')
@@ -140,7 +142,7 @@ const vm = new Vue({
   beforeDestroy() {
     this.$disconnect()
     clearTimeout(this.reconnectID)
-
+    this.$bus.$off('login', this.loginHandler)
   }
 })
 window.vm = vm

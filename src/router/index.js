@@ -99,6 +99,8 @@ async function isLogin() {
     } else {
         try {
             const response = await instance.get('/checkToken');
+            console.log('islog响应:', response);
+            console.log('islog状态码:', response.code);
             if (response.code === 200) {
                 return true;
             } else {

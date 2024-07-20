@@ -375,7 +375,7 @@ export default {
                     console.log(error)
                 })
         },
-        async sendContent1(text1, name1) {
+        sendContent1: async function (text1, name1) {
             console.log('sendContent')
             try {
                 const response = await instance.put('/fileSys/write', {
@@ -383,19 +383,30 @@ export default {
                     name: name1,
                     text: text1,
                 })
-                console.log(response)
-                console.log(response.status)
-                console.log(response.data)
-                if (response.status === 200) {
+                console.log('收到响应:', response);
+                console.log('状态码:', response.code);
+                console.log('响应数据:', response.msg);
+                if (response.code === 200) {
                     return true
                 } else {
                     return false
                 }
             } catch (error) {
                 console.log(error)
+                console.error('请求发生错误:', error.message || error);
                 return false
             }
         },
+        saveFileHandler: async function (text1, name1, callback) {
+            console.log('saveFile')
+            try {
+                const res = await this.sendContent1(text1, name1);
+                callback(res);
+            } catch (error) {
+                console.error('Error in saveFile:', error);
+                callback(false); // 或者根据您的错误处理策略进行调整
+            }
+        }
     },
 
     mounted() {
@@ -404,11 +415,10 @@ export default {
         this.sendPath()
     },
     created() {
-        this.$bus.$on('saveFile', (text1, name1, callback) => {
-            console.log('saveFile')
-            const res = this.sendContent1(text1, name1)
-            callback(res)
-        })
+        this.$bus.$on('saveFile', this.saveFileHandler);
+    },
+    beforeDestroy() {
+        this.$bus.$off('saveFile', this.saveFileHandler);
     },
     components: {
     }

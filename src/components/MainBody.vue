@@ -16,26 +16,30 @@ export default {
     name: 'MainBody',
     data() {
         return {
-            
+
         }
     },
-    created() {
-        this.$bus.$on('routeChange', (pathName) => {
-
+    methods: {
+        routerChangeHandler(pathName) {
             if (this.$route.name === pathName) {
                 return
             }
             this.$router.push({
                 name: pathName,
             }).catch(err => {
-               if (err.name !== 'NavigationDuplicated') {
-                   console.log('err:NavigationDuplicated')
-               } else {
-                   throw err
-               }
+                if (err.name !== 'NavigationDuplicated') {
+                    console.log('err:NavigationDuplicated')
+                } else {
+                    throw err
+                }
             })
-
-        })
+        },
+    },
+    created() {
+        this.$bus.$on('routeChange', this.routerChangeHandler)
+    },
+    beforeDestroy() {
+        this.$bus.$off('routeChange', this.routerChangeHandler)
     },
     mounted() {
         if (this.$route.name !== 'timingTask') {

@@ -18,12 +18,18 @@ export default {
   components: {
 
   },
-  created() {
-    //当路由跳转时，先全屏显示loading，跳转结束后再关闭loading
-    this.$bus.$on('changeLoading', (value) => {
+  methods: {
+    changeLoadingHandler(value) {
       console.log('changeLoading', value)
       this.fullscreenLoading = value
-    })
+    }
+  },
+  created() {
+    //当路由跳转时，先全屏显示loading，跳转结束后再关闭loading
+    this.$bus.$on('changeLoading', this.changeLoadingHandler)
+  },
+  beforeDestroy() {
+    this.$bus.$off('changeLoading', this.changeLoadingHandler)
   }
 }
 </script>
