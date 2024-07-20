@@ -384,6 +384,8 @@ export default {
                     text: text1,
                 })
                 console.log(response)
+                console.log(response.status)
+                console.log(response.data)
                 if (response.status === 200) {
                     return true
                 } else {
@@ -403,6 +405,7 @@ export default {
     },
     created() {
         this.$bus.$on('saveFile', (text1, name1, callback) => {
+            console.log('saveFile')
             const res = this.sendContent1(text1, name1)
             callback(res)
         })
