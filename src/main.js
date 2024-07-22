@@ -108,7 +108,7 @@ const vm = new Vue({
     },
     loginHandler() {
       console.log('loginHandler')
-      this.$router.push('/login')
+      this.$connect()
     }
   },
   mounted() {

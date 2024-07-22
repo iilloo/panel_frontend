@@ -19,6 +19,7 @@
 <script>
 // import axios from "axios";
 import instance from "@/utils/axios";
+
 export default {
     name: "LoginView",
     data() {
@@ -40,8 +41,10 @@ export default {
     },
     methods: {
         login() {
+            this.$bus.$emit('changeLoading', true)
             if (this.isDisabled) {
                 this.$message.error('用户名或密码为空或长度超过20！');
+                this.$bus.$emit('changeLoading', false)
                 return;
             }
             instance.post('/login', {
@@ -56,12 +59,14 @@ export default {
                         type: 'success'
                     });
                     this.$bus.$emit('login')
+                    this.$bus.$emit('changeLoading', false)
                     // 跳转到首页
                     this.$router.push({ path: '/home' })
                 })
                 .catch(error => {
                     // 登录失败后的操作
                     console.log(error)
+                    this.$bus.$emit('changeLoading', false)
                     
                 })
         },

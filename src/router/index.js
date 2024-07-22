@@ -122,10 +122,12 @@ router.beforeEach((to, from, next) => {
     console.log('----------');
     (async () => {
 
-        if (to.path === '/login') {
+        if (from.path !== '/login' && to.path === '/login') {
+            EventBus.$emit('changeLoading', false);
             return next();
         }
-        if (from.path === '/login') {
+        if (from.path === '/login' && to.path !== '/login') {
+            EventBus.$emit('changeLoading', false);
             return next();
         }
         let flag = await isLogin();

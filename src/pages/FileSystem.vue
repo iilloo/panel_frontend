@@ -8,15 +8,27 @@
                 <el-button @click="backToHome" type="success" icon="el-icon-house" plain size="mini"></el-button>
                 <el-input calss="fileSysInput" size="small" v-model="path" @change="sendPath"
                     placeholder="请输入内容"></el-input>
-            </div>
-            <div class="headerRight">
                 <el-button @click="addFile" type="success" icon="el-icon-document-add" plain size="mini"></el-button>
                 <el-button @click="addFolder" type="success" icon="el-icon-folder-add" plain size="mini"></el-button>
-                <el-button @click="renameFile" v-if="selectedRows.length === 1" type="primary" icon="el-icon-edit" plain
+            </div>
+            <div class="headerRight">
+
+                <el-button @click="renameFile" v-if="selectedRows.length === 1 && !isOperate" type="primary"
+                    icon="el-icon-edit" plain size="mini"></el-button>
+
+                <el-button @click="cutFile" v-if="selectedRows.length && !isOperate" type="warning"
+                    icon="el-icon-scissors" plain size="mini"></el-button>
+                <el-button @click="copyFile" v-if="selectedRows.length && !isOperate" type="primary"
+                    icon="el-icon-copy-document" plain size="mini"></el-button>
+
+                <el-button @click="pasteFile" v-if="isOperate" type="info" icon="el-icon-document-copy" plain
                     size="mini"></el-button>
 
-                <el-button @click="deleteFile" v-if="selectedRows.length" type="danger" icon="el-icon-delete" plain
+                <el-button @click="cancelOptions" v-if="isOperate" type="success" icon="el-icon-close" plain
                     size="mini"></el-button>
+
+                <!-- <el-button @click="deleteFile" v-if="selectedRows.length && !isOperate" type="danger"
+                    icon="el-icon-delete" plain size="mini"></el-button> -->
             </div>
         </div>
         <div class="table">
@@ -46,6 +58,10 @@
                 </el-table-column>
             </el-table>
         </div>
+        <div class="toolbar">
+            <el-button @click="deleteFile" v-if="selectedRows.length && !isOperate" type="danger" icon="el-icon-delete"
+                plain size="mini"></el-button>
+        </div>
     </div>
 
 </template>
@@ -65,6 +81,9 @@ export default {
             selectedRows: [],// 用于保存选中的行文件名称
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
+            preSelectedRows: [],// 用于保存复制或剪切的文件名称
+            isCut: false,
+            isOperate: false,
         }
     },
     methods: {
@@ -406,7 +425,24 @@ export default {
                 console.error('Error in saveFile:', error);
                 callback(false); // 或者根据您的错误处理策略进行调整
             }
-        }
+        },
+        cutFile() {
+            this.preSelectedRows = this.selectedRows
+            this.isOperate = true
+            this.isCut = true
+        },
+        copyFile() {
+            this.preSelectedRows = this.selectedRows
+            this.isOperate = true
+            this.isCut = false
+        },
+        pasteFile() {
+
+        },
+        cancelOptions() {
+            this.isOperate = false
+            this.isCut = false
+        },
     },
 
     mounted() {
@@ -485,5 +521,22 @@ export default {
     /* overflow: none; */
     /* height: 100%; */
     overflow: auto;
+}
+
+.fileSys .toolbar {
+    position: fixed;
+    /* 固定定位 */
+    bottom: 4%;
+    /* 距离底部 0 像素 */
+    right: 2%;
+    /* 距离右边 0 像素 */
+    z-index: 9999;
+    /* 设置一个很大的 z-index 确保浮在其他元素之上 */
+    
+    /* width: 100px; */
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+
 }
 </style>
