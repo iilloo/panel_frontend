@@ -204,27 +204,50 @@ export default {
             this.path = path.join('/') + '/'
             this.sendPath()
         },
-        addRequest(name, isDir) {
+        addRequest: async function (name, isDir) {
             this.loading = true
-            instance.post('/fileSys/add', {
-                path: this.path,
-                name: name,
-                isDir: isDir,
-            })
-                .then(response => {
-                    console.log(response)
-                    this.sendPath()
+            try {
+                const response = await instance.post('/fileSys/add', {
+                    path: this.path,
+                    name: name,
+                    isDir: isDir,
+                })
+                console.log('收到响应:', response);
+                if (response) {
                     this.$message({
                         message: '添加成功！',
                         type: 'success'
                     });
-                })
-                .catch(error => {
-                    console.log(error)
-                })
-                .finally(() => {
-                    this.loading = false
-                })
+                    await this.sendPath()
+                }
+            } catch (error) {
+                console.log(error)
+                this.$message({
+                    message: '添加失败！',
+                    type: 'error'
+                });
+            } finally {
+                this.loading = false
+            }
+            // instance.post('/fileSys/add', {
+            //     path: this.path,
+            //     name: name,
+            //     isDir: isDir,
+            // })
+            //     .then(response => {
+            //         console.log(response)
+            //         this.sendPath()
+            //         this.$message({
+            //             message: '添加成功！',
+            //             type: 'success'
+            //         });
+            //     })
+            //     .catch(error => {
+            //         console.log(error)
+            //     })
+            //     .finally(() => {
+            //         this.loading = false
+            //     })
         },
         addFile() {
 
@@ -293,30 +316,34 @@ export default {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
-            }).then(() => {
+            }).then(async () => {
                 this.loading = true
-                instance.post('/fileSys/delete', {
-                    path: this.path,
-                    names: this.selectedRows,
-                }, {
-                    headers: {
-                        'Override': 'DELETE'
-                    }
-                })
-                    .then(response => {
-                        console.log(response)
-                        this.sendPath()
+                try {
+                    const response = await instance.post('/fileSys/delete', {
+                        path: this.path,
+                        names: this.selectedRows,
+                    }, {
+                        headers: {
+                            'Override': 'DELETE'
+                        }
+                    })
+                    console.log('收到响应:', response);
+                    if (response.code === 200) {
                         this.$message({
                             message: '删除成功！',
                             type: 'success'
                         });
-                    })
-                    .catch(error => {
-                        console.log(error)
-                    })
-                    .finally(() => {
-                        this.loading = false
-                    })
+                        await this.sendPath()
+                    }
+                } catch (error) {
+                    console.log(error)
+                    this.$message({
+                        message: '删除失败！',
+                        type: 'error'
+                    });
+                } finally {
+                    this.loading = false
+                }
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -340,7 +367,7 @@ export default {
                 cancelButtonText: '取消',
                 inputPattern: matchRule,
                 inputErrorMessage: errorMessage
-            }).then(({ value }) => {
+            }).then(async ({ value }) => {
                 for (let i = 0; i < this.currentDirContents.length; i++) {
                     if (this.currentDirContents[i].name === value) {
                         this.$message({
@@ -351,23 +378,43 @@ export default {
                     }
                 }
                 this.loading = true
-                instance.post(`/fileSys/rename/${this.selectedRow.name}/${value}`, {
-                    path: this.path
-                })
-                    .then(response => {
-                        console.log(response)
-                        this.sendPath()
+                try {
+                    const response = await instance.post(`/fileSys/rename/${this.selectedRow.name}/${value}`, {
+                        path: this.path
+                    })
+                    if (response.code === 200) {
                         this.$message({
                             message: '修改成功！',
                             type: 'success'
                         });
-                    })
-                    .catch(error => {
-                        console.log(error)
-                    })
-                    .finally(() => {
-                        this.loading = false
-                    })
+                        await this.sendPath()
+                    }
+                } catch (error) {
+                    console.log(error)
+                    this.$message({
+                        message: '修改失败！',
+                        type: 'error'
+                    });
+                } finally {
+                    this.loading = false
+                }
+                // instance.post(`/fileSys/rename/${this.selectedRow.name}/${value}`, {
+                //     path: this.path
+                // })
+                //     .then(response => {
+                //         console.log(response)
+                //         this.sendPath()
+                //         this.$message({
+                //             message: '修改成功！',
+                //             type: 'success'
+                //         });
+                //     })
+                //     .catch(error => {
+                //         console.log(error)
+                //     })
+                //     .finally(() => {
+                //         this.loading = false
+                //     })
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -526,13 +573,13 @@ export default {
 .fileSys .toolbar {
     position: fixed;
     /* 固定定位 */
-    bottom: 4%;
+    bottom: 30px;
     /* 距离底部 0 像素 */
-    right: 2%;
+    right: 30px;
     /* 距离右边 0 像素 */
     z-index: 9999;
     /* 设置一个很大的 z-index 确保浮在其他元素之上 */
-    
+
     /* width: 100px; */
     background-color: #f4f4f4;
     display: flex;
