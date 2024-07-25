@@ -82,6 +82,7 @@ export default {
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
+            prePath: '',
             isCut: false,
             isOperate: false,
         }
@@ -475,16 +476,86 @@ export default {
         },
         cutFile() {
             this.preSelectedRows = this.selectedRows
+            this.prePath = this.path
             this.isOperate = true
             this.isCut = true
         },
         copyFile() {
             this.preSelectedRows = this.selectedRows
+            this.prePath = this.path
             this.isOperate = true
             this.isCut = false
         },
         pasteFile() {
-
+            this.$confirm('此操作将复制或剪切文件到当前目录, 是否继续?', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'warning'
+            }).then(async () => {
+                this.loading = true
+                //文件为剪切的情况
+                if (this.isCut === true) {
+                    try {
+                        const response = await instance.post('/fileSys/cutPaste', {
+                            names: this.preSelectedRows,
+                            oldPath: this.prePath,
+                            newPath: this.path,
+                        })
+                        console.log(response)
+                        if (response.code === 200) {
+                            
+                            this.$message({
+                                message: '粘贴成功！',
+                                type: 'success'
+                            });
+                            await this.sendPath()
+                        }
+                    } catch (error) {
+                        console.log(error)
+                        this.$message({
+                            message: '粘贴失败！',
+                            type: 'error'
+                        });
+                    } finally {
+                        this.isOperate = false
+                        this.isCut = false
+                        this.loading = false
+                    }
+                } else {
+                    //文件为复制的情况
+                    try {
+                        const response = await instance.post('/fileSys/copyPaste', {
+                            names: this.preSelectedRows,
+                            oldPath: this.prePath,
+                            newPath: this.path,
+                        })
+                        console.log(response)
+                        if (response.code === 200) {
+                            this.$message({
+                                message: '粘贴成功！',
+                                type: 'success'
+                            });
+                            await this.sendPath()
+                        }
+                    } catch (error) {
+                        console.log(error)
+                        this.$message({
+                            message: '粘贴失败！',
+                            type: 'error'
+                        });
+                    } finally {
+                        this.isOperate = false
+                        this.isCut = false
+                        this.loading = false
+                    }
+                }
+                
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '已取消操作'
+                });
+            });
         },
         cancelOptions() {
             this.isOperate = false
