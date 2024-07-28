@@ -85,6 +85,14 @@ export default {
             prePath: '',
             isCut: false,
             isOperate: false,
+            SSEInfo: [
+                { 
+                    eventSource: null, 
+                    value: 'SSE',
+                },
+                { name: 'SSE-C', value: 'SSE-C' },
+                { name: 'SSE-KMS', value: 'SSE-KMS' },
+            ],
         }
     },
     methods: {
@@ -503,7 +511,7 @@ export default {
                         })
                         console.log(response)
                         if (response.code === 200) {
-                            
+
                             this.$message({
                                 message: '粘贴成功！',
                                 type: 'success'
@@ -523,33 +531,9 @@ export default {
                     }
                 } else {
                     //文件为复制的情况
-                    try {
-                        const response = await instance.post('/fileSys/copyPaste', {
-                            names: this.preSelectedRows,
-                            oldPath: this.prePath,
-                            newPath: this.path,
-                        })
-                        console.log(response)
-                        if (response.code === 200) {
-                            this.$message({
-                                message: '粘贴成功！',
-                                type: 'success'
-                            });
-                            await this.sendPath()
-                        }
-                    } catch (error) {
-                        console.log(error)
-                        this.$message({
-                            message: '粘贴失败！',
-                            type: 'error'
-                        });
-                    } finally {
-                        this.isOperate = false
-                        this.isCut = false
-                        this.loading = false
-                    }
+
                 }
-                
+
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -560,6 +544,13 @@ export default {
         cancelOptions() {
             this.isOperate = false
             this.isCut = false
+        },
+        startCopy() {
+            const params = new URLSearchParams();
+            params.append('names', JSON.stringify(this.preSelectedRows));
+            params.append('oldPath', this.prePath);
+            params.append('newPath', this.path);
+
         },
     },
 
