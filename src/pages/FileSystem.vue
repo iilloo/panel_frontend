@@ -10,6 +10,8 @@
                     placeholder="请输入内容"></el-input>
                 <el-button @click="addFile" type="success" icon="el-icon-document-add" plain size="mini"></el-button>
                 <el-button @click="addFolder" type="success" icon="el-icon-folder-add" plain size="mini"></el-button>
+                <el-button @click="deleteFile" v-if="selectedRows.length && !isOperate" type="danger"
+                    icon="el-icon-delete" plain size="mini"></el-button>
             </div>
             <div class="headerRight">
 
@@ -59,9 +61,33 @@
             </el-table>
         </div>
         <div class="toolbar">
-            <el-button @click="deleteFile" v-if="selectedRows.length && !isOperate" type="danger" icon="el-icon-delete"
-                plain size="mini"></el-button>
+            
         </div>
+        <div class = "unfoldIcon">
+            <el-button plain class="unfoldButton"  @click="unfoldDrawer">
+                <i class = "el-icon-arrow-up" ></i>
+            </el-button>
+        </div>
+        <el-drawer class="drawer" size = "100%" :wrapperClosable = "false" :modal="false" :modal-append-to-body="false"  title="复制进度"
+            :visible.sync="isFold" :direction="unFoldDirection">
+            <el-row v-for="(SSEInfo, index) in SSEInfos" :key="index">
+                <el-col :span="12">
+                    <el-progress :percentage="SSEInfo.progressPercentage" status="success" :format="format"
+                        :stroke-width="20">
+                    </el-progress>
+                </el-col>
+                <el-col :span="12">
+                    <el-row>
+                        <el-col :span="24">
+                            <span>文件名: {{ SSEInfo.srcFileName }}</span>
+                        </el-col>
+                        <el-col :span="24">
+                            <span>目标文件名: {{ SSEInfo.destFileName }}</span>
+                        </el-col>
+                    </el-row>
+                </el-col>
+            </el-row>
+        </el-drawer>
     </div>
 
 </template>
@@ -70,6 +96,7 @@
 // import axios from 'axios';
 import instance from '@/utils/axios';
 import fileEditComponent from '@/components/FileEditComponent.vue'
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 
 export default {
@@ -85,14 +112,17 @@ export default {
             prePath: '',
             isCut: false,
             isOperate: false,
-            SSEInfo: [
-                { 
-                    eventSource: null, 
-                    value: 'SSE',
+            SSEInfos: [
+                {
+                    eventSource: null,
+                    totalBytes: 0,
+                    progressPercentage: 0,
+                    srcFileName: '',
+                    destFileName: '',
                 },
-                { name: 'SSE-C', value: 'SSE-C' },
-                { name: 'SSE-KMS', value: 'SSE-KMS' },
             ],
+            isFold: false,
+            unFoldDirection: 'btt',
         }
     },
     methods: {
@@ -531,7 +561,9 @@ export default {
                     }
                 } else {
                     //文件为复制的情况
-
+                    this.loading = false
+                    this.startCopy()
+                    this.isOperate = false
                 }
 
             }).catch(() => {
@@ -550,7 +582,48 @@ export default {
             params.append('names', JSON.stringify(this.preSelectedRows));
             params.append('oldPath', this.prePath);
             params.append('newPath', this.path);
+            const token = localStorage.getItem('token')
+            const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/copyPaste?${params.toString()}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                }
+            );
+            const SSEInfo = {
+                eventSource: eventSource,
+                totalBytes: 0,
+                progressPercentage: 0,
+                srcFileName: '',
+                destFileName: '',
+            }
+            this.SSEInfos.push(SSEInfo)
+            const index = this.SSEInfos.length - 1
+            eventSource.onmessage = (event) => {
+                const data = event.data
+                console.log(`SSE服务端数据[${index}]:`, data)
+                if (data.includes('Copy operation completed!')) {
+                    this.SSEInfos[index].progressPercentage = 100
+                    eventSource.close();
+                } else if (data.includes('Percent')) {
+                    this.SSEInfos[index].progressPercentage = parseFloat(data.split(':')[1])
+                } else if (data.includes('TotalBytes')) {
+                    this.SSEInfos[index].totalBytes = parseInt(data.split(':')[1])
+                } else if (data.includes('SrcFileName')) {
+                    this.SSEInfos[index].srcFileName = data.split(':')[1]
+                } else if (data.includes('DestFileName')) {
+                    this.SSEInfos[index].destFileName = data.split(':')[1]
+                }
 
+            }
+
+            eventSource.onerror = (error) => {
+                console.error(`EventSource error [${index}]:`, error);
+                eventSource.close();
+            };
+        },
+        unfoldDrawer() {
+            this.isFold = true
         },
     },
 
@@ -622,6 +695,7 @@ export default {
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
 
 }
 
@@ -639,13 +713,35 @@ export default {
     /* 距离底部 0 像素 */
     right: 30px;
     /* 距离右边 0 像素 */
-    z-index: 9999;
+    z-index: 20;
     /* 设置一个很大的 z-index 确保浮在其他元素之上 */
 
     /* width: 100px; */
-    background-color: #f4f4f4;
+    /* background-color: #f4f4f4; */
     display: flex;
     justify-content: center;
 
+}
+
+.fileSys .drawer {
+    position: relative !important;
+    width: 100%;
+    height: 40%;
+    bottom: 0px;
+    top: auto;
+}
+
+.fileSys .drawer .btt {
+    border: 1px solid #ebeef5;
+}
+.fileSys .unfoldIcon {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 5px;
+    font-size: larger;
+}
+.fileSys .unfoldIcon .unfoldButton {
+    border-width: 0px;
 }
 </style>
