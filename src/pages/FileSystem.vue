@@ -70,23 +70,19 @@
         </div>
         <el-drawer class="drawer" size = "100%" :wrapperClosable = "false" :modal="false" :modal-append-to-body="false"  title="复制进度"
             :visible.sync="isFold" :direction="unFoldDirection">
-            <el-row v-for="(SSEInfo, index) in SSEInfos" :key="index">
-                <el-col :span="12">
-                    <el-progress :percentage="SSEInfo.progressPercentage" status="success" :format="format"
-                        :stroke-width="20">
-                    </el-progress>
-                </el-col>
-                <el-col :span="12">
-                    <el-row>
-                        <el-col :span="24">
-                            <span>文件名: {{ SSEInfo.srcFileName }}</span>
-                        </el-col>
-                        <el-col :span="24">
-                            <span>目标文件名: {{ SSEInfo.destFileName }}</span>
-                        </el-col>
-                    </el-row>
-                </el-col>
-            </el-row>
+            <el-table class="drawerTable" height="100%" style="width: 100%" border :data = SSEInfos>
+                <el-table-column prop="srcFileName" label="源文件名" width="450px">
+                </el-table-column>
+                <el-table-column prop="destFileName" label="目标文件名" width="450px">
+                </el-table-column>
+                <el-table-column prop="totalBytes" label="总字节数" width="220px">
+                </el-table-column>
+                <el-table-column prop="progressPercentage" label="进度" >
+                    <template slot-scope="scope">
+                        <el-progress :color="customColorMethod" :percentage="scope.row.progressPercentage" :format = "progressFormat"></el-progress>
+                    </template>
+                </el-table-column>
+            </el-table>
         </el-drawer>
     </div>
 
@@ -625,6 +621,16 @@ export default {
         unfoldDrawer() {
             this.isFold = true
         },
+        progressFormat(percentage) {
+            return percentage === 100 ? '完成' : `${percentage}%`
+        },
+        customColorMethod(percentage) {
+            if (percentage === 100) {
+                return '#67c23a'
+            } else {
+                return '#1989fa'
+            }
+        }
     },
 
     mounted() {
@@ -706,6 +712,13 @@ export default {
     overflow: auto;
 }
 
+.fileSys .table .el-table .cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
 .fileSys .toolbar {
     position: fixed;
     /* 固定定位 */
@@ -734,6 +747,27 @@ export default {
 .fileSys .drawer .btt {
     border: 1px solid #ebeef5;
 }
+.fileSys .drawer .el-drawer__body {
+    padding: 10px;
+    padding-top: 0px;
+    padding-bottom: 10px;
+}
+.fileSys .drawer .el-table .cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fileSys .drawer .el-drawer__header {
+    padding: 5px 0px;
+    margin: 0px;
+}
+
+.fileSys .drawer .el-drawer__header span {
+    font-size: 15px;
+    font-weight: bold;
+    padding-left: 12px;
+}
+
 .fileSys .unfoldIcon {
     position: absolute;
     left: 50%;
