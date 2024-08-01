@@ -61,28 +61,42 @@
             </el-table>
         </div>
         <div class="toolbar">
-            
-        </div>
-        <div class = "unfoldIcon">
-            <el-button plain class="unfoldButton"  @click="unfoldDrawer">
-                <i class = "el-icon-arrow-up" ></i>
+            <el-button type="primary" plain v-if="selectedRows.length && !isOperate">
+                <i class="el-icon-download"></i>
+            </el-button>
+            <el-button type="info" plain>
+                <i class="el-icon-upload2"></i>
             </el-button>
         </div>
-        <el-drawer class="drawer" size = "100%" :wrapperClosable = "false" :modal="false" :modal-append-to-body="false"  title="复制进度"
-            :visible.sync="isFold" :direction="unFoldDirection">
-            <el-table class="drawerTable" height="100%" style="width: 100%" border :data = SSEInfos>
-                <el-table-column prop="srcFileName" label="源文件名" width="450px">
-                </el-table-column>
-                <el-table-column prop="destFileName" label="目标文件名" width="450px">
-                </el-table-column>
-                <el-table-column prop="totalBytes" label="总字节数" width="220px">
-                </el-table-column>
-                <el-table-column prop="progressPercentage" label="进度" >
-                    <template slot-scope="scope">
-                        <el-progress :color="customColorMethod" :percentage="scope.row.progressPercentage" :format = "progressFormat"></el-progress>
-                    </template>
-                </el-table-column>
-            </el-table>
+        <div class="unfoldIcon">
+            <el-button plain class="unfoldButton" @click="unfoldDrawer">
+                <i class="el-icon-arrow-up"></i>
+            </el-button>
+        </div>
+        <el-drawer class="drawer" size="100%" :withHeader="false" :wrapperClosable="false" :modal="false"
+            :modal-append-to-body="false" title="复制进度" :visible.sync="isFold" :direction="unFoldDirection">
+            <el-button plain class="drawerCloseButton" @click="closeDrawer">
+                <i class="el-icon-close"></i>
+            </el-button>
+            <el-tabs class="drawerTabs">
+                <el-tab-pane label="复制进度">
+                    <el-table class="drawerTable" height="100%" style="width: 100%" border :data=SSEInfos>
+                        <el-table-column prop="srcFileName" label="源文件名" width="450px">
+                        </el-table-column>
+                        <el-table-column prop="destFileName" label="目标文件名" width="450px">
+                        </el-table-column>
+                        <el-table-column prop="totalBytes" label="总字节数" width="220px">
+                        </el-table-column>
+                        <el-table-column prop="progressPercentage" label="进度">
+                            <template slot-scope="scope">
+                                <el-progress :color="customColorMethod" :percentage="scope.row.progressPercentage"
+                                    :format="progressFormat"></el-progress>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-tab-pane>
+                <el-tab-pane label="上传进度">配置管理</el-tab-pane>
+            </el-tabs>
         </el-drawer>
     </div>
 
@@ -105,6 +119,7 @@ export default {
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
+            pasteDeleteFiles: [],// 用于保存粘贴时由于同名需要删除的文件名称
             prePath: '',
             isCut: false,
             isOperate: false,
@@ -529,9 +544,41 @@ export default {
                 this.loading = true
                 //文件为剪切的情况
                 if (this.isCut === true) {
+                    for (let i = 0; i < this.preSelectedRows.length; i++) {
+                        if (this.currentDirContents.includes(this.preSelectedRows[i])) {
+                            await this.$confirm(`当前目录已存在同名文件${this.preSelectedRows[i]}是否覆盖？`, '提示', {
+                                confirmButtonText: '确定',
+                                cancelButtonText: '取消',
+                                type: 'warning'
+                            }).then((action) => {
+                                if (action === 'confirm') {
+                                    this.pasteDeleteFiles.push(this.preSelectedRows[i])
+                                } else {
+                                    // preSelectedRows中删除currentDirContents中已存在的文件
+                                    this.preSelectedRows.splice(i, 1)
+                                }
+                            }).catch(() => {
+                                this.$message({
+                                    type: 'info',
+                                    message: '已取消操作'
+                                });
+                            });
+                        }
+                    }
+                    if (this.preSelectedRows.length === 0) {
+                        this.$message({
+                            message: 'paste文件数为0无需操作！',
+                            type: 'info'
+                        });
+                        this.isOperate = false
+                        this.isCut = false
+                        this.loading = false
+                        return
+                    }
                     try {
                         const response = await instance.post('/fileSys/cutPaste', {
                             names: this.preSelectedRows,
+                            deleteNames: this.pasteDeleteFiles,
                             oldPath: this.prePath,
                             newPath: this.path,
                         })
@@ -630,6 +677,9 @@ export default {
             } else {
                 return '#1989fa'
             }
+        },
+        closeDrawer() {
+            this.isFold = false
         }
     },
 
@@ -664,7 +714,7 @@ export default {
 
 }
 
-.fileSys .el-input--small {
+.fileSys .header .el-input--small {
     width: 500px;
     padding: 0 10px;
 }
@@ -691,7 +741,7 @@ export default {
     display: flex;
 }
 
-.fileSys .el-button {
+.fileSys .header .el-button {
     padding: 8px 8px;
     bottom: 2px;
 }
@@ -713,9 +763,9 @@ export default {
 }
 
 .fileSys .table .el-table .cell {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 
@@ -726,14 +776,22 @@ export default {
     /* 距离底部 0 像素 */
     right: 30px;
     /* 距离右边 0 像素 */
-    z-index: 20;
+    z-index: 3100;
     /* 设置一个很大的 z-index 确保浮在其他元素之上 */
 
     /* width: 100px; */
     /* background-color: #f4f4f4; */
     display: flex;
-    justify-content: center;
+    /* justify-content: center; */
+    flex-direction: column;
+}
 
+.fileSys .toolbar .el-button {
+    margin-top: 10px;
+    margin-left: 0px;
+    padding: 0px;
+    height: 32px;
+    width: 32px;
 }
 
 .fileSys .drawer {
@@ -747,26 +805,46 @@ export default {
 .fileSys .drawer .btt {
     border: 1px solid #ebeef5;
 }
+
+.fileSys .drawer .drawerCloseButton {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    height: 30px;
+    width: 30px;
+    padding: 0px;
+    font-size: 20px;
+    border: 0px;
+    z-index: 3000;
+}
+
 .fileSys .drawer .el-drawer__body {
     padding: 10px;
     padding-top: 0px;
     padding-bottom: 10px;
 }
+
 .fileSys .drawer .el-table .cell {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.fileSys .drawer .el-drawer__header {
-    padding: 5px 0px;
-    margin: 0px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.fileSys .drawer .el-drawer__header span {
-    font-size: 15px;
-    font-weight: bold;
-    padding-left: 12px;
+
+.fileSys .drawer .drawerTabs {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
+
+.fileSys .drawer .drawerTabs .el-tabs__content {
+    flex-grow: 1;
+}
+
+.fileSys .drawer .drawerTabs .el-tabs__content .el-tab-pane {
+    height: 100%;
+}
+
 
 .fileSys .unfoldIcon {
     position: absolute;
@@ -775,6 +853,7 @@ export default {
     bottom: 5px;
     font-size: larger;
 }
+
 .fileSys .unfoldIcon .unfoldButton {
     border-width: 0px;
 }
