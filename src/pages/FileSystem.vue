@@ -562,6 +562,8 @@ export default {
                                     type: 'info',
                                     message: '已取消操作'
                                 });
+                                // preSelectedRows中删除currentDirContents中已存在的文件
+                                this.preSelectedRows.splice(i, 1)
                             });
                         }
                     }
