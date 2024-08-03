@@ -535,38 +535,44 @@ export default {
             this.isOperate = true
             this.isCut = false
         },
+        async handleSamefileName() {
+            for (let i = 0; i < this.preSelectedRows.length; i++) {
+                for (let j = 0; j < this.currentDirContents.length; j++) {
+                    if (this.preSelectedRows[i] === this.currentDirContents[j].name) {
+                        await this.$confirm(`<div style="word-wrap: break-word;">是否覆盖该文件夹下的同名文件<br>${this.preSelectedRows[i]}</div>`, '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning',
+                            dangerouslyUseHTMLString: true,
+                        }).then((action) => {
+                            if (action === 'confirm') {
+                                this.pasteDeleteFiles.push(this.preSelectedRows[i])
+                            } else {
+                                // preSelectedRows中删除currentDirContents中已存在的文件
+                                this.preSelectedRows.splice(i, 1)
+                            }
+                        }).catch(() => {
+                            this.$message({
+                                type: 'info',
+                                message: '已取消操作'
+                            });
+                            // preSelectedRows中删除currentDirContents中已存在的文件
+                            this.preSelectedRows.splice(i, 1)
+                        });
+                        break;
+                    }
+                }
+            }
+        },
         pasteFile() {
             this.$confirm('此操作将复制或剪切文件到当前目录, 是否继续?', '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'warning'
             }).then(async () => {
-                this.loading = true
                 //文件为剪切的情况
                 if (this.isCut === true) {
-                    for (let i = 0; i < this.preSelectedRows.length; i++) {
-                        if (this.currentDirContents.includes(this.preSelectedRows[i])) {
-                            await this.$confirm(`当前目录已存在同名文件${this.preSelectedRows[i]}是否覆盖？`, '提示', {
-                                confirmButtonText: '确定',
-                                cancelButtonText: '取消',
-                                type: 'warning'
-                            }).then((action) => {
-                                if (action === 'confirm') {
-                                    this.pasteDeleteFiles.push(this.preSelectedRows[i])
-                                } else {
-                                    // preSelectedRows中删除currentDirContents中已存在的文件
-                                    this.preSelectedRows.splice(i, 1)
-                                }
-                            }).catch(() => {
-                                this.$message({
-                                    type: 'info',
-                                    message: '已取消操作'
-                                });
-                                // preSelectedRows中删除currentDirContents中已存在的文件
-                                this.preSelectedRows.splice(i, 1)
-                            });
-                        }
-                    }
+                    await this.handleSamefileName()
                     if (this.preSelectedRows.length === 0) {
                         this.$message({
                             message: 'paste文件数为0无需操作！',
@@ -577,6 +583,7 @@ export default {
                         this.loading = false
                         return
                     }
+                    this.loading = true
                     try {
                         const response = await instance.post('/fileSys/cutPaste', {
                             names: this.preSelectedRows,
@@ -607,6 +614,16 @@ export default {
                 } else {
                     //文件为复制的情况
                     this.loading = false
+                    await this.handleSamefileName()
+                    if (this.preSelectedRows.length === 0) {
+                        this.$message({
+                            message: 'copy文件数为0无需操作！',
+                            type: 'info'
+                        });
+                        this.isOperate = false
+                        this.isCut = false
+                        return
+                    }
                     this.startCopy()
                     this.isOperate = false
                 }
@@ -650,6 +667,11 @@ export default {
                 if (data.includes('Copy operation completed!')) {
                     this.SSEInfos[index].progressPercentage = 100
                     eventSource.close();
+                    this.$message({
+                        message: '复制成功！',
+                        type: 'success'
+                    });
+                    this.sendPath()
                 } else if (data.includes('Percent')) {
                     this.SSEInfos[index].progressPercentage = parseFloat(data.split(':')[1])
                 } else if (data.includes('TotalBytes')) {
