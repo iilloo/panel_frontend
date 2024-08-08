@@ -59,12 +59,15 @@
                     </template>
                 </el-table-column>
             </el-table>
+            <!-- 隐藏文件输入框 -->
+            <input type="file" ref="fileInput" @change="uploadFile" style="display: none;" />
+
         </div>
         <div class="toolbar">
             <el-button type="primary" plain v-if="selectedRows.length && !isOperate">
                 <i class="el-icon-download"></i>
             </el-button>
-            <el-button type="info" plain>
+            <el-button type="info" @click="triggerFileDialog" plain>
                 <i class="el-icon-upload2"></i>
             </el-button>
         </div>
@@ -704,7 +707,18 @@ export default {
         },
         closeDrawer() {
             this.isFold = false
+        },
+        // 触发文件选择对话框
+        triggerFileDialog() {
+            this.$refs.fileInput.click();
+        },
+        // 上传文件
+        uploadFile(event) {
+            const file = event.target.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
         }
+
     },
 
     mounted() {
