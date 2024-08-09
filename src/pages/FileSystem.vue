@@ -60,7 +60,10 @@
                 </el-table-column>
             </el-table>
             <!-- 隐藏文件输入框 -->
-            <input type="file" ref="fileInput" @change="uploadFile" style="display: none;" />
+            <input type="file" ref="fileInput" @change="uploadFile" style="display: none;"
+                :multiple="isChromium ? true : false" />
+            <input type="file" ref="folderInput" @change="uploadFile" style="display: none;"
+                :webkitdirectory="isChromium ? true : false" :multiple="isChromium ? true : false" />
 
         </div>
         <div class="toolbar">
@@ -69,6 +72,9 @@
             </el-button>
             <el-button type="info" @click="triggerFileDialog" plain>
                 <i class="el-icon-upload2"></i>
+            </el-button>
+            <el-button type="info" @click="triggerFolderDialog" plain>
+                <i class="el-icon-upload"></i>
             </el-button>
         </div>
         <div class="unfoldIcon">
@@ -116,14 +122,14 @@ export default {
     name: 'FileSystem',
     data() {
         return {
-            currentDirContents: [],
-            path: '',
+            currentDirContents: [],// 用于保存当前目录下的文件信息
+            path: '',// 用于保存当前路径
             selectedRows: [],// 用于保存选中的行文件名称
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
             pasteDeleteFiles: [],// 用于保存粘贴时由于同名需要删除的文件名称
-            prePath: '',
+            prePath: '', // 用于保存复制或剪切的源文件目录路径
             isCut: false,
             isOperate: false,
             SSEInfos: [
@@ -137,6 +143,7 @@ export default {
             ],
             isFold: false,
             unFoldDirection: 'btt',
+            isChromium: false, // 标识是否为 Chromium 浏览器
         }
     },
     methods: {
@@ -712,12 +719,48 @@ export default {
         triggerFileDialog() {
             this.$refs.fileInput.click();
         },
+        triggerFolderDialog() {
+            this.$refs.folderInput.click();
+        },
         // 上传文件
         uploadFile(event) {
-            const file = event.target.files[0];
+            const files = event.target.files;
+            if (files.length > 0) {
+                const formData = new FormData();
+                formData.append("path", this.path);
+                for (let i = 0; i < files.length; i++) {
+                    formData.append("files", files[i]);
+                }
+                //上传文件
+                instance.post('/fileSys/uploadFile', formData)
+                    .then(response => {
+                        console.log(response)
+                        this.$message({
+                            message: '上传成功！',
+                            type: 'success'
+                        });
+                        this.sendPath()
+                    })
+                    .catch(error => {
+                        console.log(error)
+                        this.$message({
+                            message: '上传失败！',
+                            type: 'error'
+                        });
+                    })
+                    .finally(() => {
+
+                    })
+            }
+
+        },
+        uploadFolder(event) {
+            const files = event.target.files;
             const formData = new FormData();
-            formData.append("file", file);
-        }
+            for (let i = 0; i < files.length; i++) {
+                formData.append("files", files[i]);
+            }
+        },
 
     },
 
@@ -725,6 +768,11 @@ export default {
         // localStorage.setItem('path', this.path)
         this.path = localStorage.getItem('path') || '/home/kazusa/'
         this.sendPath()
+        // 获取并转为小写的 userAgent 字符串
+        const userAgent = navigator.userAgent.toLowerCase();
+        // 判断是否为基于 Chromium 的浏览器
+        const isChromium = !!window.chrome && (userAgent.includes("chrome") || userAgent.includes("edg") || userAgent.includes("opr"));
+        this.isChromium = isChromium;
     },
     created() {
         this.$bus.$on('saveFile', this.saveFileHandler);
@@ -810,9 +858,9 @@ export default {
 .fileSys .toolbar {
     position: fixed;
     /* 固定定位 */
-    bottom: 30px;
+    bottom: 34px;
     /* 距离底部 0 像素 */
-    right: 30px;
+    right: 40px;
     /* 距离右边 0 像素 */
     z-index: 3100;
     /* 设置一个很大的 z-index 确保浮在其他元素之上 */
