@@ -104,7 +104,20 @@
                         </el-table-column>
                     </el-table>
                 </el-tab-pane>
-                <el-tab-pane label="上传进度">配置管理</el-tab-pane>
+                <el-tab-pane label="上传进度">
+                    <el-table class="drawerTable" height="100%" style="width: 100%" border :data = "uploadFileProgress">
+                        <el-table-column prop="uploadFileName" label="上传文件名" width="450px">
+                        </el-table-column>
+                        <el-table-column prop="totalBytes" label="总字节数" width="220px">
+                        </el-table-column>
+                        <el-table-column prop="progressPercentage" label="进度">
+                            <template slot-scope="scope">
+                                <el-progress :color="customColorMethod" :percentage="scope.row.progressPercentage"
+                                    :format="progressFormat"></el-progress>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </el-tab-pane>
             </el-tabs>
         </el-drawer>
     </div>
@@ -139,6 +152,14 @@ export default {
                     progressPercentage: 0,
                     srcFileName: '',
                     destFileName: '',
+                },
+            ],
+            uploadFileProgress: [
+                {
+                    eventSource: null,
+                    totalBytes: 0,
+                    progressPercentage: 0,
+                    uploadFileName: '',
                 },
             ],
             isFold: false,
@@ -726,6 +747,46 @@ export default {
         uploadFile(event) {
             const files = event.target.files;
             if (files.length > 0) {
+                // 创建SSE连接获取各次上传进度
+                const token = localStorage.getItem('token')
+                const eventSource = new EventSourcePolyfill('http://192.168.124.101:8888/fileSys/uploadFileProgress',
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    },
+                );
+                const uploadFileProgress = {
+                    eventSource: eventSource,
+                    totalBytes: 0,
+                    progressPercentage: 0,
+                    uploadFileName: '',
+                }
+                this.uploadFileProgress.push(uploadFileProgress)
+                const index = this.uploadFileProgress.length - 1
+                eventSource.onmessage = (event) => {
+                    const data = event.data
+                    console.log(`uploadFile-SSE服务端数据[${index}]:`, data)
+                    if (data.includes('Upload operation completed!')) {
+                        this.uploadFileProgress[index].progressPercentage = 100
+                        eventSource.close();
+                        this.$message({
+                            message: '上传成功！',
+                            type: 'success'
+                        });
+                        this.sendPath()
+                    } else if (data.includes('Percent')) {
+                        this.uploadFileProgress[index].progressPercentage = parseFloat(data.split(':')[1])
+                    } else if (data.includes('TotalBytes')) {
+                        this.uploadFileProgress[index].totalBytes = parseInt(data.split(':')[1])
+                    } else if (data.includes('uploadFileName')) {
+                        this.uploadFileProgress[index].uploadFileName = data.split(':')[1]
+                    }
+                }
+                eventSource.onerror = (error) => {
+                    console.error(`EventSource error [${index}]:`, error);
+                    eventSource.close();
+                }
                 const formData = new FormData();
                 formData.append("path", this.path);
                 for (let i = 0; i < files.length; i++) {
