@@ -104,7 +104,7 @@
                         </el-table-column>
                     </el-table>
                 </el-tab-pane>
-                <el-tab-pane label="上传进度">
+                <el-tab-pane label="上传进度"> 
                     <el-table class="drawerTable" height="100%" style="width: 100%" border :data = "uploadFileProgress">
                         <el-table-column prop="uploadFileName" label="上传文件名" width="450px">
                         </el-table-column>
@@ -143,8 +143,8 @@ export default {
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
             pasteDeleteFiles: [],// 用于保存粘贴时由于同名需要删除的文件名称
             prePath: '', // 用于保存复制或剪切的源文件目录路径
-            isCut: false,
-            isOperate: false,
+            isCut: false,// 用于标识是否为剪切操作
+            isOperate: false,// 用于标识是否为复制或剪切操作
             SSEInfos: [
                 {
                     eventSource: null,
