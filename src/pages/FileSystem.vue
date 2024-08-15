@@ -160,6 +160,7 @@ export default {
                     totalBytes: 0,
                     progressPercentage: 0,
                     uploadFileName: '',
+                    destFilePath: '',
                 },
             ],
             isFold: false,
@@ -745,11 +746,12 @@ export default {
         },
         // 上传文件
         uploadFile(event) {
+            const timeIndex = new Date().toString()
             const files = event.target.files;
             if (files.length > 0) {
                 // 创建SSE连接获取各次上传进度
                 const token = localStorage.getItem('token')
-                const eventSource = new EventSourcePolyfill('http://192.168.124.101:8888/fileSys/uploadFileProgress',
+                const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFileProgress/?timeIndex=${timeIndex}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -761,6 +763,7 @@ export default {
                     totalBytes: 0,
                     progressPercentage: 0,
                     uploadFileName: '',
+                    destFilePath: this.path,
                 }
                 this.uploadFileProgress.push(uploadFileProgress)
                 const index = this.uploadFileProgress.length - 1
@@ -789,6 +792,7 @@ export default {
                 }
                 const formData = new FormData();
                 formData.append("path", this.path);
+                formData.append("timeIndex", timeIndex);
                 for (let i = 0; i < files.length; i++) {
                     formData.append("files", files[i]);
                 }
