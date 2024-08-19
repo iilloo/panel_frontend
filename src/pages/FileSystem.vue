@@ -104,8 +104,8 @@
                         </el-table-column>
                     </el-table>
                 </el-tab-pane>
-                <el-tab-pane label="上传进度"> 
-                    <el-table class="drawerTable" height="100%" style="width: 100%" border :data = "uploadFileProgress">
+                <el-tab-pane label="上传进度">
+                    <el-table class="drawerTable" height="100%" style="width: 100%" border :data="uploadFileProgress">
                         <el-table-column prop="uploadFileName" label="上传文件名" width="450px">
                         </el-table-column>
                         <el-table-column prop="totalBytes" label="总字节数" width="220px">
@@ -751,7 +751,9 @@ export default {
             if (files.length > 0) {
                 // 创建SSE连接获取各次上传进度
                 const token = localStorage.getItem('token')
-                const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFileProgress/?timeIndex=${timeIndex}`,
+                const params = new URLSearchParams();
+                params.append('timeIndex', timeIndex);
+                const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFileProgress?${params.toString()}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
