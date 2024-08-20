@@ -782,9 +782,9 @@ export default {
                         this.sendPath()
                     } else if (data.includes('Percent')) {
                         this.uploadFileProgress[index].progressPercentage = parseFloat(data.split(':')[1])
-                    } else if (data.includes('TotalBytes')) {
+                    } else if (data.includes('TotalSize')) {
                         this.uploadFileProgress[index].totalBytes = parseInt(data.split(':')[1])
-                    } else if (data.includes('uploadFileName')) {
+                    } else if (data.includes('FileName')) {
                         this.uploadFileProgress[index].uploadFileName = data.split(':')[1]
                     }
                 }
