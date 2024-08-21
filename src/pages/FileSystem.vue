@@ -740,12 +740,17 @@ export default {
         // 触发文件选择对话框
         triggerFileDialog() {
             this.$refs.fileInput.click();
+            // 重置 file input 的值, 防止选择相同文件时由于浏览器的缓存机制不触发 change 事件
+            this.$refs.fileInput.value = null;
         },
         triggerFolderDialog() {
             this.$refs.folderInput.click();
+            // 重置 file input 的值, 防止选择相同文件时由于浏览器的缓存机制不触发 change 事件
+            this.$refs.folderInput.value = null;
         },
         // 上传文件
         uploadFile(event) {
+        console.log('uploadFile')
             const timeIndex = new Date().toString()
             const files = event.target.files;
             if (files.length > 0) {
