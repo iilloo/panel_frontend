@@ -780,10 +780,10 @@ export default {
                     if (data.includes('Upload operation completed!')) {
                         this.uploadFileProgress[index].progressPercentage = 100
                         eventSource.close();
-                        this.$message({
-                            message: '上传成功！',
-                            type: 'success'
-                        });
+                        // this.$message({
+                        //     message: '上传成功！',
+                        //     type: 'success'
+                        // });
                         this.sendPath()
                     } else if (data.includes('Percent')) {
                         this.uploadFileProgress[index].progressPercentage = parseFloat(data.split(':')[1])
