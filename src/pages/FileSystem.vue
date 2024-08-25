@@ -106,7 +106,7 @@
                 </el-tab-pane>
                 <el-tab-pane label="上传进度">
                     <el-table class="drawerTable" height="100%" style="width: 100%" border :data="uploadFileProgress">
-                        <el-table-column prop="uploadFileName" label="上传文件名" width="450px">
+                        <el-table-column prop="uploadFileName" label="当前上传文件名" width="450px">
                         </el-table-column>
                         <el-table-column prop="totalBytes" label="总字节数" width="220px">
                         </el-table-column>
