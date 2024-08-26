@@ -62,7 +62,7 @@
             <!-- 隐藏文件输入框 -->
             <input type="file" ref="fileInput" @change="uploadFile" style="display: none;"
                 :multiple="isChromium ? true : false" />
-            <input type="file" ref="folderInput" @change="uploadFile" style="display: none;"
+            <input type="file" ref="folderInput" @change="uploadFolder" style="display: none;"
                 :webkitdirectory="isChromium ? true : false" :multiple="isChromium ? true : false" />
 
         </div>
