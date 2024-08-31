@@ -750,7 +750,7 @@ export default {
         },
         // 上传文件
         uploadFile(event) {
-        console.log('uploadFile')
+            console.log('uploadFile')
             const timeIndex = new Date().toString()
             const files = event.target.files;
             if (files.length > 0) {
@@ -827,11 +827,100 @@ export default {
 
         },
         uploadFolder(event) {
+            console.log('uploadFolder')
+            const timeIndex = new Date().toString()
+
             const files = event.target.files;
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append("files", files[i]);
+            if (!files.length) {
+                return;
             }
+            // 创建SSE连接获取各次上传进度
+            const token = localStorage.getItem('token')
+            const params = new URLSearchParams();
+            params.append('timeIndex', timeIndex);
+            const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFolderProgress?${params.toString()}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                },
+            );
+
+            const uploadFileProgress = {
+                eventSource: eventSource,
+                totalBytes: 0,
+                progressPercentage: 0,
+                uploadFileName: '',
+                destFilePath: this.path,
+            }
+            this.uploadFileProgress.push(uploadFileProgress)
+            const index = this.uploadFileProgress.length - 1
+
+            eventSource.onmessage = (event) => {
+                const data = event.data
+                console.log(`uploadFile-SSE服务端数据[${index}]:`, data)
+                if (data.includes('Upload operation completed!')) {
+                    this.uploadFileProgress[index].progressPercentage = 100
+                    eventSource.close();
+                    // this.$message({
+                    //     message: '上传成功！',
+                    //     type: 'success'
+                    // });
+                    this.sendPath()
+                } else if (data.includes('Percent')) {
+                    this.uploadFileProgress[index].progressPercentage = parseFloat(data.split(':')[1])
+                } else if (data.includes('TotalSize')) {
+                    this.uploadFileProgress[index].totalBytes = parseInt(data.split(':')[1])
+                } else if (data.includes('FileName')) {
+                    this.uploadFileProgress[index].uploadFileName = data.split(':')[1]
+                }
+            }
+            eventSource.onerror = (error) => {
+                console.error(`EventSource error [${index}]:`, error);
+                eventSource.close();
+            }
+
+
+            // 使用Map对象来组织文件夹结构
+            const folderMap = new Map();
+            // 遍历文件夹中的所有文件
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const relativePath = file.webkitRelativePath;
+                const folderName = relativePath.substring(0, relativePath.lastIndexOf('/'));
+
+                // 如果文件夹不存在，则创建一个新的数组
+                if (!folderMap.has(folderName)) {
+                    folderMap.set(folderName, []);
+                }
+
+                // 将文件添加到文件夹对应的数组中
+                folderMap.get(folderName).push(file);
+            }
+            // 将文件夹结构转换为 FormData 对象
+            const formData = new FormData();
+            formData.append("files", folderMap);
+            formData.append("path", this.path);
+            //上传文件夹
+            instance.post('/fileSys/uploadFolder', formData)
+                .then(response => {
+                    console.log(response)
+                    this.$message({
+                        message: '上传成功！',
+                        type: 'success'
+                    });
+                    this.sendPath()
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.$message({
+                        message: '上传失败！',
+                        type: 'error'
+                    });
+                })
+                .finally(() => {
+
+                })
         },
 
     },
