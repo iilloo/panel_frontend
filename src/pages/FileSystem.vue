@@ -838,7 +838,7 @@ export default {
             const token = localStorage.getItem('token')
             const params = new URLSearchParams();
             params.append('timeIndex', timeIndex);
-            const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFolderProgress?${params.toString()}`,
+            const eventSource = new EventSourcePolyfill(`http://192.168.124.101:8888/fileSys/uploadFileProgress?${params.toString()}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -862,10 +862,6 @@ export default {
                 if (data.includes('Upload operation completed!')) {
                     this.uploadFileProgress[index].progressPercentage = 100
                     eventSource.close();
-                    // this.$message({
-                    //     message: '上传成功！',
-                    //     type: 'success'
-                    // });
                     this.sendPath()
                 } else if (data.includes('Percent')) {
                     this.uploadFileProgress[index].progressPercentage = parseFloat(data.split(':')[1])
@@ -879,6 +875,7 @@ export default {
                 console.error(`EventSource error [${index}]:`, error);
                 eventSource.close();
             }
+
 
 
             // 使用Map对象来组织文件夹结构
@@ -899,8 +896,15 @@ export default {
             }
             // 将文件夹结构转换为 FormData 对象
             const formData = new FormData();
-            formData.append("files", folderMap);
+            folderMap.forEach((files, folderName) => {
+                formData.append("folders", folderName);
+                files.forEach(file => {
+                    // 使用文件的相对路径作为键名，保持文件夹结构
+                    formData.append(`files[${folderName}]`, file);
+                });
+            });
             formData.append("path", this.path);
+            formData.append("timeIndex", timeIndex);
             //上传文件夹
             instance.post('/fileSys/uploadFolder', formData)
                 .then(response => {
