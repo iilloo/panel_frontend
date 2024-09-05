@@ -66,8 +66,9 @@
                 :webkitdirectory="isChromium ? true : false" :multiple="isChromium ? true : false" />
 
         </div>
+        <!-- 工具栏 包含上传、下载 -->
         <div class="toolbar">
-            <el-button type="primary" plain v-if="selectedRows.length && !isOperate">
+            <el-button type="primary" @click = "downloadFiles" plain v-if="selectedRows.length && !isOperate">
                 <i class="el-icon-download"></i>
             </el-button>
             <el-button type="info" @click="triggerFileDialog" plain>
@@ -926,7 +927,15 @@ export default {
 
                 })
         },
-
+        downloadFiles() {
+            instance.get('/fileSys/download', {
+                responseType: 'blob',
+                params: {
+                    path: this.path,
+                    names: this.selectedRows,
+                },
+            })
+        }
     },
 
     mounted() {
