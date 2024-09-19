@@ -139,6 +139,7 @@ export default {
             currentDirContents: [],// 用于保存当前目录下的文件信息
             path: '',// 用于保存当前路径
             selectedRows: [],// 用于保存选中的行文件名称
+            downloadFilesInfo: [],// 用于保存下载的文件名称
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
@@ -384,14 +385,18 @@ export default {
         //更新选中的文件数据
         handleSelectionChange(val) {
             this.selectedRows = []
+            this.downloadFilesInfo = []
             for (let i = 0; i < val.length; i++) {
                 this.selectedRows[i] = val[i].name
+                this.downloadFilesInfo[i].name = val[i].name
+                this.downloadFilesInfo[i].isDir = val[i].isDir
             }
             // console.log(this.selectedRows)
             this.selectedRow = {}
             if (val.length === 1) {
                 this.selectedRow = { name: val[0].name, isDir: val[0].isDir }
             }
+            
         },
         //删除文件
         deleteFile() {
@@ -932,7 +937,7 @@ export default {
                 responseType: 'blob',
                 params: {
                     path: this.path,
-                    names: this.selectedRows,
+                    filesInfo: this.downloadFilesInfo,
                 },
             })
         }
