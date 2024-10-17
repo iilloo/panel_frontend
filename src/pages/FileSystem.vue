@@ -68,7 +68,7 @@
         </div>
         <!-- 工具栏 包含上传、下载 -->
         <div class="toolbar">
-            <el-button type="primary" @click = "downloadFiles" plain v-if="selectedRows.length && !isOperate">
+            <el-button type="primary" @click="downloadFiles" plain v-if="selectedRows.length && !isOperate">
                 <i class="el-icon-download"></i>
             </el-button>
             <el-button type="info" @click="triggerFileDialog" plain>
@@ -139,7 +139,12 @@ export default {
             currentDirContents: [],// 用于保存当前目录下的文件信息
             path: '',// 用于保存当前路径
             selectedRows: [],// 用于保存选中的行文件名称
-            downloadFilesInfo: [],// 用于保存下载的文件名称
+            downloadFilesInfo: [
+                {
+                    name: '',
+                    isDir: false,
+                },
+            ],// 用于保存下载的文件名称
             selectedRow: {},// 用于保存选中的行文件数据
             loading: false,
             preSelectedRows: [],// 用于保存复制或剪切的文件名称
@@ -388,15 +393,17 @@ export default {
             this.downloadFilesInfo = []
             for (let i = 0; i < val.length; i++) {
                 this.selectedRows[i] = val[i].name
-                this.downloadFilesInfo[i].name = val[i].name
-                this.downloadFilesInfo[i].isDir = val[i].isDir
+                this.downloadFilesInfo[i] = {
+                    name: val[i].name,
+                    isDir: val[i].isDir,
+                }
             }
             // console.log(this.selectedRows)
             this.selectedRow = {}
             if (val.length === 1) {
                 this.selectedRow = { name: val[0].name, isDir: val[0].isDir }
             }
-            
+
         },
         //删除文件
         deleteFile() {
@@ -932,13 +939,28 @@ export default {
 
                 })
         },
+        // 下载文件
         downloadFiles() {
-            instance.get('/fileSys/download', {
+            instance.get('/fileSys/downloadFile', {
                 responseType: 'blob',
                 params: {
                     path: this.path,
-                    filesInfo: this.downloadFilesInfo,
+                    filesInfo: JSON.stringify(this.downloadFilesInfo),
                 },
+            }).then(response => {
+                const blob = new Blob([response.data], { type: 'application/zip' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'download.zip';
+                link.click();
+                window.URL.revokeObjectURL(url);
+            }).catch(error => {
+                console.log(error)
+                this.$message({
+                    message: '下载失败！',
+                    type: 'error'
+                });
             })
         }
     },
