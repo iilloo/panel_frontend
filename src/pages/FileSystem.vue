@@ -947,21 +947,33 @@ export default {
                     path: this.path,
                     filesInfo: JSON.stringify(this.downloadFilesInfo),
                 },
-            }).then(response => {
-                const blob = new Blob([response.data], { type: 'application/zip' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'download.zip';
-                link.click();
-                window.URL.revokeObjectURL(url);
-            }).catch(error => {
-                console.log(error)
-                this.$message({
-                    message: '下载失败！',
-                    type: 'error'
-                });
             })
+                .then(response => {
+                    console.log("response", response)
+                    console.log("response.data", response.data)
+                    let ContentDisposition = response.headers['content-disposition']
+                    console.log('Content-Disposition:', ContentDisposition)
+                    let fileName = ContentDisposition.split('=')[1].trim()
+                    let ContentType = response.headers['content-type']
+                    console.log('Content-Type:', ContentType)
+                    const blob = new Blob([response.data], { type: ContentType });
+                    const url = window.URL.createObjectURL(blob);
+                    console.log("tmpURl:", url)
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link); // 添加 link 到文档，确保不会触发重新加载
+                    link.click();
+                    link.remove();  // 移除链接
+                    window.URL.revokeObjectURL(url);  // 释放URL资源
+                })
+                .catch(error => {
+                    console.log(error)
+                    this.$message({
+                        message: '下载失败！',
+                        type: 'error'
+                    });
+                })
         }
     },
 

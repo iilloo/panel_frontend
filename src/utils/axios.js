@@ -32,6 +32,12 @@ instance.interceptors.response.use(
         if (token) {
             localStorage.setItem('token', token);
         }
+        // 如果响应头中包含Need-ResponseHeader:true,则返回整个响应头
+        if (response.headers['need-responseheader'] == 'true') {
+            console.log('Need-ResponseHeader = true')
+            return response
+        }
+        // 如果不需要响应头,则返回响应数据
         return response.data
     },
     error => {
