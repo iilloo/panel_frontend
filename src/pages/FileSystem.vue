@@ -953,7 +953,8 @@ export default {
                     console.log("response.data", response.data)
                     let ContentDisposition = response.headers['content-disposition']
                     console.log('Content-Disposition:', ContentDisposition)
-                    let fileName = ContentDisposition.split('=')[1].trim()
+                    //decodeURIComponent将 URL 编码的字符串解码为原始的字符串
+                    let fileName = decodeURIComponent(ContentDisposition.split('=')[1].trim())
                     let ContentType = response.headers['content-type']
                     console.log('Content-Type:', ContentType)
                     const blob = new Blob([response.data], { type: ContentType });
