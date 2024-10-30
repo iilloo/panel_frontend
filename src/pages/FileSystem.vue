@@ -68,7 +68,7 @@
         </div>
         <!-- 工具栏 包含上传、下载 -->
         <div class="toolbar">
-            <el-button type="primary" @click="downloadFiles" plain v-if="selectedRows.length && !isOperate">
+            <el-button type="primary" @click="downloadFiles_v_2" plain v-if="selectedRows.length && !isOperate">
                 <i class="el-icon-download"></i>
             </el-button>
             <el-button type="info" @click="triggerFileDialog" plain>
@@ -939,34 +939,115 @@ export default {
 
                 })
         },
-        // 下载文件
-        downloadFiles() {
+        //下载文件
+        downloadFiles_v_2() {
+            const token = localStorage.getItem('token')
             instance.get('/fileSys/downloadFile', {
-                responseType: 'blob',
                 params: {
-                    path: this.path,
-                    filesInfo: JSON.stringify(this.downloadFilesInfo),
+                    getSinature: "true",
+                    token: token,
                 },
             })
                 .then(response => {
+                    console.log('获取签名成功！')
+                    console.log(response)
+                    const params = new URLSearchParams({
+                        path: this.path,
+                        filesInfo: JSON.stringify(this.downloadFilesInfo),
+                        signature: response.signature,
+                    });
+                    const url = `http://192.168.124.101:8888/fileSys/downloadFile?${params.toString()}`;
+                    window.location.href = url;
+                    console.log('url:', url)
+
+                })
+                .catch(error => {
+                    console.log(error)
+                })
+
+            // const token = localStorage.getItem('token');
+            // const params = new URLSearchParams({
+            //     path: this.path,
+            //     filesInfo: JSON.stringify(this.downloadFilesInfo),
+            //     token: token,
+            // });
+            // const url = `http://192.168.124.101:8888/fileSys/downloadFile?${params.toString()}`;
+            // window.location.href = url;
+
+        },
+
+
+
+        // 下载文件
+        downloadFiles() {
+            const token = localStorage.getItem('token');
+            const params = new URLSearchParams({
+                path: this.path,
+                filesInfo: JSON.stringify(this.downloadFilesInfo),
+
+            });
+            const url = `http://192.168.124.101:8888/fileSys/downloadFile?${params.toString()}`;
+
+            fetch(url, {
+                // responseType: 'blob',
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                },
+
+            })
+                .then(response => {
                     console.log("response", response)
-                    console.log("response.data", response.data)
-                    let ContentDisposition = response.headers['content-disposition']
+                    console.log("response.data", response.body)
+                    let ContentDisposition = response.headers.get('content-disposition')
                     console.log('Content-Disposition:', ContentDisposition)
                     //decodeURIComponent将 URL 编码的字符串解码为原始的字符串
                     let fileName = decodeURIComponent(ContentDisposition.split('=')[1].trim())
-                    let ContentType = response.headers['content-type']
+                    let ContentType = response.headers.get('content-type')
                     console.log('Content-Type:', ContentType)
-                    const blob = new Blob([response.data], { type: ContentType });
-                    const url = window.URL.createObjectURL(blob);
-                    console.log("tmpURl:", url)
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = fileName;
-                    document.body.appendChild(link); // 添加 link 到文档，确保不会触发重新加载
-                    link.click();
-                    link.remove();  // 移除链接
-                    window.URL.revokeObjectURL(url);  // 释放URL资源
+                    // 使用 ReadableStream 来处理下载
+                    const reader = response.body.getReader();
+                    const contentLength = +response.headers.get('content-length');
+                    let receivedLength = 0; // 已接收的字节数
+                    const chunks = []; // 存储每一块的内容
+
+
+
+                    // 创建一个可下载的 Blob 对象并保存
+                    function createBlob() {
+                        const blob = new Blob(chunks);
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName; // 设置要下载的文件名
+                        document.body.appendChild(link);
+                        link.click();
+                        link.remove();
+                        window.URL.revokeObjectURL(url); // 释放URL资源
+                    }
+
+
+                    // 读取数据的函数
+                    function processText({ done, value }) {
+                        if (done) {
+                            createBlob(); // 所有数据都已读取，创建 Blob
+                            return;
+                        }
+
+                        // 将接收到的数据块存入数组
+                        chunks.push(value);
+                        receivedLength += value.length; // 更新接收的字节数
+                        const percentCompleted = Math.round((receivedLength * 100) / contentLength);
+                        console.log(`下载进度: ${percentCompleted}%`); // 更新进度
+
+                        // 继续读取数据
+                        return reader.read().then(processText);
+                    }
+                    // 开始读取数据
+                    return reader.read().then(processText);
+
+
+                    
                 })
                 .catch(error => {
                     console.log(error)
