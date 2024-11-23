@@ -129,7 +129,7 @@
 // import axios from 'axios';
 import instance from '@/utils/axios';
 import fileEditComponent from '@/components/FileEditComponent.vue'
-import { EventSourcePolyfill } from 'event-source-polyfill';
+import { EventSourcePolyfill } from 'event-source-polyfill';//sse连接
 
 
 export default {
@@ -941,6 +941,7 @@ export default {
         },
         //下载文件
         downloadFiles_v_2() {
+            console.log('进入downloadFiles_v_2')
             const token = localStorage.getItem('token')
             instance.get('/fileSys/downloadFile', {
                 params: {
