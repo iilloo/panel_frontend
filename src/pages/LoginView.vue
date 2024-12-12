@@ -19,6 +19,7 @@
 <script>
 // import axios from "axios";
 import instance from "@/utils/axios";
+import vm from '../main.js'
 
 export default {
     name: "LoginView",
@@ -60,6 +61,7 @@ export default {
                     });
                     this.$bus.$emit('login')
                     this.$bus.$emit('changeLoading', false)
+                    vm.UserName = this.username
                     // 跳转到首页
                     this.$router.push({ path: '/home' })
                 })
